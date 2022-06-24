@@ -1,0 +1,30 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.analysis.typeCheckingMode": "basic",
+		"python.formatting.provider": "black",
+		"python.linting.mypyEnabled": true,
+		"python.linting.pylintEnabled": false,
+		"python.linting.flake8Enabled": false,
+		"python.linting.ignorePatterns": [
+			"**/site-packages/**/*.py",
+			".vscode/*.py"
+		],
+		"python.terminal.activateEnvInCurrentTerminal": true,
+		"cSpell.words": [
+			"bson",
+			"creational",
+			"dotenv",
+			"Jzbc",
+			"pymongo",
+			"pypattyrn",
+			"pyrogram",
+			"Shahla"
+		]
+		
+	}
+}
