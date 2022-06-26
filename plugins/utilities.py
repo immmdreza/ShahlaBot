@@ -19,7 +19,7 @@ async def on_id_requested(
         return
 
     await message.reply_text(f"{sender.first_name}'s id: `{sender.id}`", quote=True)
-
+# kio kio
 
 # Request chat id with chat_id command
 @pyrogram.client.Client.on_message(pyrogram.filters.command("chat_id"))  # type: ignore
