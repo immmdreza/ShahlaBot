@@ -86,12 +86,9 @@ class Database:
             self._group_admins = self.get_collection(GroupAdmin)
         return self._group_admins
 
-    def set_up(self):
+    def set_up(self, config: Configuration):
         col = self.configurations
         col.collection.drop()
 
-        configs = Configuration(
-            -1001232448330, "ShahlaRobot", -1001653408472, [106296897]
-        )
-        col.insert_one(configs)
-        return configs
+        col.insert_one(config)
+        return config

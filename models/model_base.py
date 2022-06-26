@@ -23,3 +23,9 @@ class ModelBase:
     @classmethod
     def deserialize(cls: type[_T], data: dict[str, Any] | None) -> _T | None:
         return deserialize(cls, data)
+
+    @property
+    def id(self) -> ObjectId:
+        if self._id is None:
+            raise ValueError(f"{self} has no id")
+        return self._id

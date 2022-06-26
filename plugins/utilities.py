@@ -1,45 +1,29 @@
-from pyrogram.errors import BadRequest 
-import pyrogram
+from pyrogram.types import Message
+from pyrogram.filters import command
+from shahla import Shahla
 
 
-
-@pyrogram.client.Client.on_message(pyrogram.filters.command("id"))  # type: ignore
-async def on_id_requested(
-    _: pyrogram.client.Client,
-    message: pyrogram.types.Message,
-):
-
-    if len(message.command) > 1:
-        if message.command[1][0] == "@":
-            try:
-                user = await _.get_users(message.command[1])
-                id = user.id
-                name = user.first_name
-            except BadRequest:
-                await message.reply_text("The username is invalid")
-                return
-        else:
-            try:
-                user = await _.get_users(message.command[1])
-                id = user.id
-                name = user.first_name
-            except BadRequest:
-                await message.reply_text("The username is invalid")
-                return
-
-    elif message.reply_to_message:
-        id = message.reply_to_message.from_user.id
-        name = message.reply_to_message.from_user.first_name
-    else:
-        id = message.chat.id
-        name = message.chat.title
+@Shahla.on_message(command("id"))  # type: ignore
+async def on_id_requested(client: Shahla, message: Message):
 
     if message.from_user is None:
         await message.reply_text("I can't find the sender of this message.")
         return
 
+    target_user = await client.resolve_target_user_from_command(message)
+
+    if target_user is not None:
+        user_id = target_user.id
+        name = target_user.first_name
+    else:
+        if message.chat:
+            user_id = message.chat.id
+            name = message.chat.title
+        else:
+            user_id = message.from_user.id
+            name = message.from_user.first_name
+
     if message.from_user.is_self:
         return
 
-    await message.reply_text(f"{name}'s id: `{id}`", quote=True)
-
+    await message.reply_text(f"{name}'s id: `{user_id}`", quote=True)
