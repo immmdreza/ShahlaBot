@@ -23,12 +23,12 @@ shahla = Shahla(
 )
 
 if __name__ == "__main__":
-    # shahla.register_type(Database, lambda _: Database("shahla"))
-    # shahla.register_type(Configuration, lambda s: s.request_instance(Database).set_up())
-    # shahla.register_type(
-    #     Reporter,
-    #     lambda s: Reporter(s, s.request_instance(Configuration).report_chat_id),
-    #     LifeTime.Scoped,
-    # )
+    shahla.register_type(Database, lambda _: Database("shahla"))
+    shahla.register_type(Configuration, lambda s: s.request_instance(Database).set_up())
+    shahla.register_type(
+        Reporter,
+        lambda s: Reporter(s, s.request_instance(Configuration).report_chat_id),
+        LifeTime.Scoped,
+    )
 
     shahla.run()
