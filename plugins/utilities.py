@@ -1,4 +1,6 @@
+from pyrogram.errors import BadRequest 
 import pyrogram
+
 
 
 @pyrogram.client.Client.on_message(pyrogram.filters.command("id"))  # type: ignore
@@ -9,15 +11,22 @@ async def on_id_requested(
 
     if len(message.command) > 1:
         if message.command[1][0] == "@":
-            user = await _.get_users(message.command[1])
-            id = user.id
-            name = user.first_name
-        elif await _.get_users(message.command[1]): 
-            user = await _.get_users(message.command[1])
-            id = user.id
-            name = user.first_name
+            try:
+                user = await _.get_users(message.command[1])
+                id = user.id
+                name = user.first_name
+            except BadRequest:
+                await message.reply_text("The username is invalid")
+                return
         else:
-            pass
+            try:
+                user = await _.get_users(message.command[1])
+                id = user.id
+                name = user.first_name
+            except BadRequest:
+                await message.reply_text("The username is invalid")
+                return
+
     elif message.reply_to_message:
         id = message.reply_to_message.from_user.id
         name = message.reply_to_message.from_user.first_name
