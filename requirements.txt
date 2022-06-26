@@ -2,3 +2,4 @@ pymongo==4.1.1
 Pyrogram==2.0.30
 python-dotenv==0.20.0
 TgCrypto==1.2.3
+python-telegram-bot==20.0a1
