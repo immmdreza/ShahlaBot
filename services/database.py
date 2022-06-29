@@ -91,7 +91,7 @@ class Database:
         col.collection.drop()
 
         configs = Configuration(
-            -1001232448330, "ShahlaRobot", -1001653408472, [106296897]
+            -1001635347518, "Ksksjwlqpwbot", -1001641081771, [1135066860]
         )
         col.insert_one(configs)
         return configs
