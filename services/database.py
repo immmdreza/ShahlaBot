@@ -40,6 +40,10 @@ class Collection(Generic[_T]):
             (document.serialize() for document in documents), *args, **kwargs
         )
 
+    def update_model(self, update: _T, *args: Any, **kwargs: Any):
+        flt = {"_id": update.id}
+        return self.update_one(flt, update.serialize(), *args, **kwargs)
+
     def update_one(self, filter: Any, update: Any, *args: Any, **kwargs: Any):
         return self._collection.update_one(filter, update, *args, **kwargs)
 
