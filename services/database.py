@@ -40,6 +40,10 @@ class Collection(Generic[_T]):
             (document.serialize() for document in documents), *args, **kwargs
         )
 
+    def update_model(self, update: _T, *args: Any, **kwargs: Any):
+        flt = {"_id": update.id}
+        return self.update_one(flt, update.serialize(), *args, **kwargs)
+
     def update_one(self, filter: Any, update: Any, *args: Any, **kwargs: Any):
         return self._collection.update_one(filter, update, *args, **kwargs)
 
@@ -86,12 +90,9 @@ class Database:
             self._group_admins = self.get_collection(GroupAdmin)
         return self._group_admins
 
-    def set_up(self):
+    def set_up(self, config: Configuration):
         col = self.configurations
         col.collection.drop()
 
-        configs = Configuration(
-            -1001635347518, "Ksksjwlqpwbot", -1001641081771, [1135066860]
-        )
-        col.insert_one(configs)
-        return configs
+        col.insert_one(config)
+        return config

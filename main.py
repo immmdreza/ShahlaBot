@@ -5,13 +5,12 @@ logging.basicConfig(
 )
 
 import asyncio
-import os
-from typing import cast
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ChatMemberHandler, CommandHandler
+from telegram.ext import ApplicationBuilder, ChatMemberHandler
 
+import helpers
 from shahla import Shahla, LifeTime
 from services.reporter import Reporter
 from services.database import Database
@@ -20,9 +19,13 @@ from plugins.bot_handlers.reporters import chat_member_updated
 
 
 load_dotenv()
-api_id = int(cast(str, os.getenv("API_ID")))
-api_hash = cast(str, os.getenv("API_HASH"))
-bot_token = cast(str, os.getenv("BOT_TOKEN"))
+api_id = helpers.get_from_env("API_ID", int)
+api_hash = helpers.get_from_env("API_HASH")
+bot_token = helpers.get_from_env("BOT_TOKEN")
+main_chat_id = helpers.get_from_env("MAIN_CHAT_ID", int)
+report_channel_id = helpers.get_from_env("REPORT_CHANNEL_ID", int)
+bot_username = helpers.get_from_env("BOT_USERNAME")
+bot_admins = helpers.get_from_env("SUPER_ADMINS", helpers.deserialize_list)
 
 shahla = Shahla(
     "ShahlaBot",
@@ -36,7 +39,10 @@ application = ApplicationBuilder().token(bot_token).build()
 
 async def main():
     shahla.register_type(Database, lambda _: Database("shahla"))
-    shahla.register_type(Configuration, lambda s: s.request_instance(Database).set_up())
+    config = Configuration(main_chat_id, bot_username, report_channel_id, bot_admins)
+    shahla.register_type(
+        Configuration, lambda s: s.request_instance(Database).set_up(config)
+    )
     shahla.register_type(
         Reporter,
         lambda s: Reporter(s, s.request_instance(Configuration).report_chat_id),

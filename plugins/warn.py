@@ -1,4 +1,3 @@
-from pyrogram.client import Client
 from pyrogram.types import Message
 from pyrogram.filters import command, group
 
@@ -6,13 +5,25 @@ from shahla import Shahla, async_injector
 from services.reporter import Reporter
 from services.database import Database
 from models.user_warnings import UserWarning
-from models.group_admin import GroupAdmin, Permissions
+from models.configuration import Configuration
 
 
-@Client.on_message(filters=command("warn") & group)  # type: ignore
+WARN_MESSAGE_FMT = (
+    "User {target_fn} has been warned "
+    "By: {admin_fn}\n"
+    "Reason: {reason}\n"
+    "Warnings: {warns_count}"
+)
+
+
+@Shahla.on_message(command("warn") & group)  # type: ignore
 @async_injector
-async def on_message(
-    shahla: Shahla, message: Message, reporter: Reporter, database: Database
+async def on_warn_requested(
+    shahla: Shahla,
+    message: Message,
+    config: Configuration,
+    reporter: Reporter,
+    database: Database,
 ):
     warnings = database.user_warnings
     admins = database.group_admins
@@ -20,15 +31,70 @@ async def on_message(
     if not message.from_user:
         return
 
-    sender_id = message.from_user.id
-    admin = admins.find_one(user_chat_id=sender_id)
-    if admin is None:
-        await message.reply_text("You are not an admin of this group.")
+    target_user = await shahla.resolve_target_user_from_command(message)
+    if not target_user:
+        await message.reply_text(
+            "Please reply to a user or use the command in the format `/warn @username`."
+        )
         return
 
-    if not admin.permissions.CanWarn:
-        await message.reply_text("You are not allowed to warn users.")
-        return
+    sender_id = message.from_user.id
+
+    if sender_id not in config.super_admins:
+        admin = admins.find_one(dict(user_chat_id=sender_id))
+        if admin is None:
+            await message.reply_text("You are not an admin of this group.")
+            return
+
+        if not admin.permissions.CanWarn:
+            await message.reply_text("You are not allowed to warn users.")
+            return
 
     # admin can warn users ...
-    ...
+    if target_user.id == sender_id:
+        await message.reply_text("You can't warn yourself.")
+        return
+
+    if target_user in config.super_admins:
+        await message.reply_text("You can't warn a super admin.")
+        return
+
+    # check if target is not an admin
+    if admins.exists(dict(user_chat_id=target_user.id)):
+        await message.reply_text("You can't warn an admin.")
+        return
+
+    # check if there's a reason in command
+    reason = "No reason given."
+
+    # increase warning count
+    warning = warnings.find_one(dict(user_chat_id=target_user.id))
+    if warning is None:
+        warning = UserWarning(user_chat_id=target_user.id, warns_count=1)
+        warnings.insert_one(warning)
+
+        text = WARN_MESSAGE_FMT.format(
+            target_fn=target_user.first_name,
+            admin_fn=message.from_user.first_name,
+            reason=reason,
+            warns_count=1,
+        )
+        await message.reply_text(text)
+        await reporter.report("Warning", text)
+    else:
+        warning.warns_count += 1
+        # TODO: ban on maximum warns
+        # if warning.warns_count + 1 >= config.max_warns:
+        #     await message.reply_text("User has reached maximum warns.")
+        #     return
+
+        warnings.update_model(warning)
+
+        text = WARN_MESSAGE_FMT.format(
+            target_fn=target_user.first_name,
+            admin_fn=message.from_user.first_name,
+            reason=reason,
+            warns_count=warning.warns_count,
+        )
+        await message.reply_text(text)
+        await reporter.report("Warning", text)

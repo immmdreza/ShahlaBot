@@ -2,9 +2,11 @@ from dataclasses import dataclass
 from enum import Enum
 import functools
 import inspect
-from typing import Any, Callable, Generic, Optional, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar, cast
 
-import pyrogram.client
+from pyrogram.client import Client
+from pyrogram.errors import BadRequest
+from pyrogram.types import Message, User
 
 
 _T = TypeVar("_T")
@@ -63,7 +65,7 @@ class MultipleScope:
             scope.__exit__(exc_type, exc_val, exc_tb)
 
 
-class Shahla(pyrogram.client.Client):
+class Shahla(Client):
     def register_type(
         self,
         the_type: type[_T],
@@ -107,6 +109,21 @@ class Shahla(pyrogram.client.Client):
 
         model = self._registered_types[the_type]
         return Scope(self, model)
+
+    async def resolve_target_user_from_command(self, message: Message) -> User | None:
+        if message.command:
+            if len(message.command) > 1:
+                try:
+                    return cast(User, await self.get_users(message.command[1]))
+                except BadRequest:
+                    return None
+        
+        if message.reply_to_message:
+            if message.reply_to_message.from_user:
+                return message.reply_to_message.from_user
+            if message.reply_to_message.forward_from:
+                return message.reply_to_message.forward_from
+        return None
 
 
 def async_injector(func: Callable[..., Any]):
