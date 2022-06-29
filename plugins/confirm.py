@@ -8,4 +8,4 @@ async def confirm(
     _: Shahla,
     message: Message,
 ):
-    message.reply_text("/confirm@TsWwPlus_bot")
+    await message.reply_text("/confirm@TsWwPlus_bot")
