@@ -1,4 +1,4 @@
-from typing import Any, Generic, Iterable, Optional, TypeVar
+from typing import Any, Generator, Generic, Iterable, Optional, TypeVar
 
 import pymongo.mongo_client
 import pymongo.collection
@@ -23,10 +23,14 @@ class Collection(Generic[_T]):
     def collection(self) -> pymongo.collection.Collection:
         return self._collection
 
-    def find(self, *args: Any, **kwargs: Any):
+    def find(self, *args: Any, **kwargs: Any) -> Generator[_T, None, None]:
         return (
-            self._entity_type.deserialize(item)
-            for item in self._collection.find(*args, **kwargs)
+            x
+            for x in (
+                self._entity_type.deserialize(item)
+                for item in self._collection.find(*args, **kwargs)
+            )
+            if x is not None
         )
 
     def find_one(self, *args: Any, **kwargs: Any) -> Optional[_T]:
