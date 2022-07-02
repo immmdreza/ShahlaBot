@@ -6,6 +6,17 @@ from models.configuration import Configuration
 
 
 @async_injector
+async def notify_before_lock(shahla: Shahla, configuration: Configuration):
+    group_id = configuration.functional_chat
+    if not group_id:
+        return
+
+    await shahla.send_message(
+        group_id, "یادتون نره گروه راس ساعت 24، بسته میشه! سریع جمش کنید."
+    )
+
+
+@async_injector
 async def group_locker(shahla: Shahla, config: Configuration):
     group_id = config.functional_chat
     if not group_id:
