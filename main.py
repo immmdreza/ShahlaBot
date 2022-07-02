@@ -9,8 +9,11 @@ import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ChatMemberHandler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 import helpers
+import services.group_lock as lock_service
 from shahla import Shahla, LifeTime
 from services.reporter import Reporter
 from services.database import Database
@@ -67,5 +70,15 @@ async def main():
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
+
+    aps = AsyncIOScheduler()
+    aps.add_job(
+        lock_service.group_locker,
+        # Every day at 24:00 (Asia/Tehran), the group will be locked
+        CronTrigger(hour=24, timezone="Asia/Tehran"),
+        kwargs={"shahla": shahla},
+    ),
+    aps.start()
+
     loop.run_until_complete(main())
     application.run_polling(allowed_updates=[Update.MY_CHAT_MEMBER, Update.CHAT_MEMBER])

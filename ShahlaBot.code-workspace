@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
+		"python.linting.enabled": false,
 		"python.analysis.typeCheckingMode": "basic",
 		"python.formatting.provider": "black",
 		"python.linting.mypyEnabled": true,

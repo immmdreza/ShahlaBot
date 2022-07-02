@@ -27,7 +27,8 @@ class DependencyModel(Generic[_T]):
 
 
 class Scope(Generic[_T]):
-    def __init__(self, shahla: "Shahla", model: DependencyModel[_T]):
+    def __init__(self, name: str, shahla: "Shahla", model: DependencyModel[_T]):
+        self._name = name
         self._shahla = shahla
         self._model = model
         self._dependency: Optional[_T] = None
@@ -38,12 +39,12 @@ class Scope(Generic[_T]):
                 self._model.dependency_instance = self._model.dependency_factory(
                     self._shahla
                 )
-            return self._model.dependency_instance
+            return self._name, self._model.dependency_instance
         elif self._model.dependency_lifetime == LifeTime.Transient:
-            return self._model.dependency_factory(self._shahla)
+            return self._name, self._model.dependency_factory(self._shahla)
         else:
             self._dependency = self._model.dependency_factory(self._shahla)
-            return self._dependency
+            return self._name, self._dependency
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._model.dependency_lifetime == LifeTime.Scoped:
@@ -103,12 +104,12 @@ class Shahla(Client):
         except KeyError:
             raise ValueError(f"Type {the_type} not registered.")
 
-    def create_scope_for(self, the_type: type[_T]) -> Scope[_T]:
+    def create_scope_for(self, the_type: type[_T], scope_name: str) -> Scope[_T]:
         if not hasattr(self, "_registered_types"):
             raise ValueError("No registered types.")
 
         model = self._registered_types[the_type]
-        return Scope(self, model)
+        return Scope(scope_name, self, model)
 
     async def resolve_target_user_from_command(self, message: Message) -> User | None:
         if message.command:
@@ -117,7 +118,7 @@ class Shahla(Client):
                     return cast(User, await self.get_users(message.command[1]))
                 except BadRequest:
                     return None
-        
+
         if message.reply_to_message:
             if message.reply_to_message.from_user:
                 return message.reply_to_message.from_user
@@ -128,18 +129,31 @@ class Shahla(Client):
 
 def async_injector(func: Callable[..., Any]):
     @functools.wraps(func)
-    async def wrapped(self: Shahla, update: Any):
+    async def wrapped(*args, **kwargs):
         signature = inspect.signature(func)
+        args_count = len(args)
+
+        shahla: Shahla | None = None
+        try:
+            shahla = next(x for x in args if isinstance(x, Shahla))
+        except StopIteration:
+            try:
+                shahla = next(x for x in kwargs.values() if isinstance(x, Shahla))
+            except StopIteration:
+                raise ValueError("No shahla instance found.")
 
         resolved_types: dict[str, Scope[Any]] = {}
         for i, (key, value) in enumerate(signature.parameters.items()):
-            if i <= 1:
+            if i <= (args_count - 1):
                 continue
 
-            instance = self.create_scope_for(value.annotation)
+            if key in kwargs:
+                continue
+
+            instance = shahla.create_scope_for(value.annotation, key)
             resolved_types[key] = instance
 
         with MultipleScope(*resolved_types.values()) as scopes:
-            return await func(self, update, *scopes)
+            return await func(*args, **kwargs, **dict(scopes))
 
     return wrapped
