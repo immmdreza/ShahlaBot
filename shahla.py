@@ -157,3 +157,34 @@ def async_injector(func: Callable[..., Any]):
             return await func(*args, **kwargs, **dict(scopes))
 
     return wrapped
+
+
+def injector(func: Callable[..., Any]):
+    def wrapped(*args, **kwargs):
+        signature = inspect.signature(func)
+        args_count = len(args)
+
+        shahla: Shahla | None = None
+        try:
+            shahla = next(x for x in args if isinstance(x, Shahla))
+        except StopIteration:
+            try:
+                shahla = next(x for x in kwargs.values() if isinstance(x, Shahla))
+            except StopIteration:
+                raise ValueError("No shahla instance found.")
+
+        resolved_types: dict[str, Scope[Any]] = {}
+        for i, (key, value) in enumerate(signature.parameters.items()):
+            if i <= (args_count - 1):
+                continue
+
+            if key in kwargs:
+                continue
+
+            instance = shahla.create_scope_for(value.annotation, key)
+            resolved_types[key] = instance
+
+        with MultipleScope(*resolved_types.values()) as scopes:
+            return func(*args, **kwargs, **dict(scopes))
+
+    return wrapped
