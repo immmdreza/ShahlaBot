@@ -23,6 +23,7 @@
 			"dotenv",
 			"jobstores",
 			"Jzbc",
+			"prmedtr",
 			"pymongo",
 			"pypattyrn",
 			"pyrogram",

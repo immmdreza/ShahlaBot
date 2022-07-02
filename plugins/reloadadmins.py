@@ -11,7 +11,7 @@ from models.configuration import Configuration
 @Shahla.on_message(filters.command("reload") & filters.group)  # type: ignore
 @async_injector
 async def reload_admins(
-    shahla: Shahla, message: Message, config: Configuration, database: Database
+    _: Shahla, message: Message, config: Configuration, database: Database
 ):
     if not message.chat:
         return

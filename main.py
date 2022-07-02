@@ -8,7 +8,7 @@ import asyncio
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ChatMemberHandler
+from telegram.ext import ApplicationBuilder, ChatMemberHandler, InlineQueryHandler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -19,6 +19,7 @@ from services.reporter import Reporter
 from services.database import Database
 from models.configuration import Configuration
 from plugins.bot_handlers.reporters import chat_member_updated
+from plugins.bot_handlers.permission_editor import open_permission_editor
 
 
 load_dotenv()
@@ -28,6 +29,7 @@ bot_token = helpers.get_from_env("BOT_TOKEN")
 main_chat_id = helpers.get_from_env("MAIN_CHAT_ID", int)
 report_channel_id = helpers.get_from_env("REPORT_CHANNEL_ID", int)
 bot_username = helpers.get_from_env("BOT_USERNAME")
+self_username = helpers.get_from_env("SELF_USERNAME")
 bot_admins = helpers.get_from_env("SUPER_ADMINS", helpers.deserialize_list)
 
 shahla = Shahla(
@@ -42,7 +44,9 @@ application = ApplicationBuilder().token(bot_token).build()
 
 async def main():
     shahla.register_type(Database, lambda _: Database("shahla"))
-    config = Configuration(main_chat_id, bot_username, report_channel_id, bot_admins)
+    config = Configuration(
+        main_chat_id, bot_username, self_username, report_channel_id, bot_admins
+    )
     shahla.register_type(
         Configuration, lambda s: s.request_instance(Database).set_up(config)
     )
@@ -63,6 +67,9 @@ async def main():
         chat_member_updated, ChatMemberHandler.ANY_CHAT_MEMBER
     )
     application.add_handler(chat_member_handler)
+    application.add_handler(
+        InlineQueryHandler(open_permission_editor, pattern="^prmedtr")
+    )
 
     bot_info = await application.bot.get_me()
     print(f"User bot is {bot_info.first_name}", bot_info.id)
@@ -87,4 +94,6 @@ if __name__ == "__main__":
 
     aps.start()
     loop.run_until_complete(main())
-    application.run_polling(allowed_updates=[Update.MY_CHAT_MEMBER, Update.CHAT_MEMBER])
+    application.run_polling(
+        allowed_updates=[Update.MY_CHAT_MEMBER, Update.CHAT_MEMBER, Update.INLINE_QUERY]
+    )

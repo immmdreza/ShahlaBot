@@ -8,7 +8,7 @@ from typing import cast
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from shahla import Shahla
+from shahla import Shahla, async_injector_from_ctx
 from services.reporter import Reporter
 
 
@@ -20,32 +20,33 @@ Effective user: **{ev_name}** [`{ev_id}`]
 """
 
 
-async def chat_member_updated(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    shahla: Shahla = context.bot_data["shahla"]
-    reporter_scope = shahla.create_scope_for(Reporter)
+@async_injector_from_ctx
+async def chat_member_updated(
+    update: Update,
+    _: ContextTypes.DEFAULT_TYPE,
+    __: Shahla,
+    reporter: Reporter,
+):
+    cmu = update.chat_member or update.my_chat_member
 
-    with reporter_scope as reporter:
+    if cmu is None:
+        return
 
-        cmu = update.chat_member or update.my_chat_member
+    if cmu.new_chat_member.user is None:
+        effected_name = "Unknown"
+        effected_id = "---"
+    else:
+        effected_name = cast(str, cmu.new_chat_member.user.first_name)
+        effected_id = str(cmu.new_chat_member.user.id)
 
-        if cmu is None:
-            return
-
-        if cmu.new_chat_member.user is None:
-            effected_name = "Unknown"
-            effected_id = "---"
-        else:
-            effected_name = cast(str, cmu.new_chat_member.user.first_name)
-            effected_id = str(cmu.new_chat_member.user.id)
-
-        await reporter.report(
-            "Chat Member Updated",
-            CHAT_MEMBER_MESSAGE_FMT.format(
-                old_status=cmu.old_chat_member.status,
-                new_status=cmu.new_chat_member.status,
-                ed_name=effected_name,
-                ed_id=effected_id,
-                ev_name=cmu.from_user.first_name,
-                ev_id=cmu.from_user.id,
-            ),
-        )
+    await reporter.report(
+        "Chat Member Updated",
+        CHAT_MEMBER_MESSAGE_FMT.format(
+            old_status=cmu.old_chat_member.status,
+            new_status=cmu.new_chat_member.status,
+            ed_name=effected_name,
+            ed_id=effected_id,
+            ev_name=cmu.from_user.first_name,
+            ev_id=cmu.from_user.id,
+        ),
+    )

@@ -1,15 +1,17 @@
-from dataclasses import dataclass
-from enum import Enum
 import functools
 import inspect
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, Generic, Optional, TypeVar, cast
 
 from pyrogram.client import Client
 from pyrogram.errors import BadRequest
 from pyrogram.types import Message, User
+from telegram.ext import CallbackContext
 
 
 _T = TypeVar("_T")
+_K = TypeVar("_K")
 
 
 class LifeTime(Enum):
@@ -186,5 +188,91 @@ def injector(func: Callable[..., Any]):
 
         with MultipleScope(*resolved_types.values()) as scopes:
             return func(*args, **kwargs, **dict(scopes))
+
+    return wrapped
+
+
+def async_injector_grabber(
+    grab_from_type: type[_K], grabber: Callable[[_K], Shahla]
+) -> Callable[..., Any]:
+    def async_injector(func: Callable[..., Any]):
+        @functools.wraps(func)
+        async def wrapped(*args, **kwargs):
+            signature = inspect.signature(func)
+            args_count = len(args)
+
+            grab_from: _K | None = None
+            try:
+                grab_from = next(x for x in args if isinstance(x, grab_from_type))
+            except StopIteration:
+                try:
+                    grab_from = next(
+                        x for x in kwargs.values() if isinstance(x, grab_from_type)
+                    )
+                except StopIteration:
+                    raise ValueError("No shahla instance found.")
+            shahla = grabber(grab_from)
+
+            resolved_types: dict[str, Scope[Any]] = {}
+            for i, (key, value) in enumerate(signature.parameters.items()):
+                if i <= (args_count - 1):
+                    continue
+
+                if key in kwargs:
+                    continue
+
+                if value.annotation == grab_from_type:
+                    continue
+
+                if value.annotation == Shahla:
+                    kwargs[key] = shahla
+
+                instance = shahla.create_scope_for(value.annotation, key)
+                resolved_types[key] = instance
+
+            with MultipleScope(*resolved_types.values()) as scopes:
+                return await func(*args, **kwargs, **dict(scopes))
+
+        return wrapped
+
+    return async_injector
+
+
+def async_injector_from_ctx(func: Callable[..., Any]) -> Callable[..., Any]:
+    @functools.wraps(func)
+    async def wrapped(*args, **kwargs):
+        signature = inspect.signature(func)
+        args_count = len(args)
+
+        try:
+            grab_from = next(x for x in args if isinstance(x, CallbackContext))
+        except StopIteration:
+            try:
+                grab_from = next(
+                    x for x in kwargs.values() if isinstance(x, CallbackContext)
+                )
+            except StopIteration:
+                raise ValueError("No shahla instance found.")
+        shahla = grab_from.bot_data["shahla"]
+
+        resolved_types: dict[str, Scope[Any]] = {}
+        for i, (key, value) in enumerate(signature.parameters.items()):
+            if i <= (args_count - 1):
+                continue
+
+            if key in kwargs:
+                continue
+
+            if value.annotation == CallbackContext:
+                continue
+
+            if value.annotation == Shahla:
+                kwargs[key] = shahla
+
+            instance = shahla.create_scope_for(value.annotation, key)
+            resolved_types[key] = instance
+
+        with MultipleScope(*resolved_types.values()) as scopes:
+            return await func(*args, **kwargs, **dict(scopes))
 
     return wrapped
