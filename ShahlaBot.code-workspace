@@ -16,13 +16,16 @@
 		],
 		"python.terminal.activateEnvInCurrentTerminal": true,
 		"cSpell.words": [
+			"apscheduler",
 			"bson",
 			"creational",
 			"dotenv",
+			"jobstores",
 			"Jzbc",
 			"pymongo",
 			"pypattyrn",
 			"pyrogram",
+			"pytz",
 			"Shahla"
 		]
 		
