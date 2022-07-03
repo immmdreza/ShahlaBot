@@ -18,8 +18,14 @@ class ModelBase:
     _id: ObjectId | None = field(default=None, kw_only=True)
 
     def serialize(self) -> dict[str, Any]:
-        return {k: v for k, v in asdict(self).items() if v is not None}
+        return {k: v for k, v in asdict(self).items() if v is not None and k != "_id"}
 
     @classmethod
     def deserialize(cls: type[_T], data: dict[str, Any] | None) -> _T | None:
         return deserialize(cls, data)
+
+    @property
+    def id(self) -> ObjectId:
+        if self._id is None:
+            raise ValueError(f"{self} has no id")
+        return self._id

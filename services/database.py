@@ -1,12 +1,13 @@
-from typing import Any, Generic, Iterable, Optional, TypeVar
+from typing import Any, Generator, Generic, Iterable, Optional, TypeVar
 
-import pymongo.mongo_client
 import pymongo.collection
+import pymongo.mongo_client
 
 from models import ModelBase
 from models.configuration import Configuration
-from models.user_warnings import UserWarning
+from models.extra_info import ExtraInfo
 from models.group_admin import GroupAdmin
+from models.user_warnings import UserWarning
 
 
 _T = TypeVar("_T", bound=ModelBase)
@@ -23,10 +24,14 @@ class Collection(Generic[_T]):
     def collection(self) -> pymongo.collection.Collection:
         return self._collection
 
-    def find(self, *args: Any, **kwargs: Any):
+    def find(self, *args: Any, **kwargs: Any) -> Generator[_T, None, None]:
         return (
-            self._entity_type.deserialize(item)
-            for item in self._collection.find(*args, **kwargs)
+            x
+            for x in (
+                self._entity_type.deserialize(item)
+                for item in self._collection.find(*args, **kwargs)
+            )
+            if x is not None
         )
 
     def find_one(self, *args: Any, **kwargs: Any) -> Optional[_T]:
@@ -39,6 +44,10 @@ class Collection(Generic[_T]):
         return self._collection.insert_many(
             (document.serialize() for document in documents), *args, **kwargs
         )
+
+    def update_model(self, update: _T, *args: Any, **kwargs: Any):
+        flt = {"_id": update.id}
+        return self.update_one(flt, {"$set": update.serialize()}, *args, **kwargs)
 
     def update_one(self, filter: Any, update: Any, *args: Any, **kwargs: Any):
         return self._collection.update_one(filter, update, *args, **kwargs)
@@ -64,6 +73,7 @@ class Database:
         self._configurations: Optional[Collection[Configuration]] = None
         self._user_warnings: Optional[Collection[UserWarning]] = None
         self._group_admins: Optional[Collection[GroupAdmin]] = None
+        self._extra_infos: Optional[Collection[ExtraInfo]] = None
 
     def get_collection(self, entity_type: type[_T]) -> Collection[_T]:
         return Collection(entity_type, self.db.get_collection(entity_type.__name__))
@@ -86,12 +96,15 @@ class Database:
             self._group_admins = self.get_collection(GroupAdmin)
         return self._group_admins
 
-    def set_up(self):
+    @property
+    def extra_infos(self) -> Collection[ExtraInfo]:
+        if self._extra_infos is None:
+            self._extra_infos = self.get_collection(ExtraInfo)
+        return self._extra_infos
+
+    def set_up(self, config: Configuration):
         col = self.configurations
         col.collection.drop()
 
-        configs = Configuration(
-            -1001232448330, "ShahlaRobot", -1001653408472, [106296897]
-        )
-        col.insert_one(configs)
-        return configs
+        col.insert_one(config)
+        return config
