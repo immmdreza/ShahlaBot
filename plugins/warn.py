@@ -1,6 +1,9 @@
-from pyrogram.types import Message
+from datetime import datetime, timedelta
+from pyrogram.types import Message, ChatPermissions
 from pyrogram.filters import command, group
 
+from models.group_admin import Permissions
+import services.database_helpers as db_helpers
 from shahla import Shahla, async_injector
 from services.reporter import Reporter
 from services.database import Database
@@ -39,16 +42,13 @@ async def on_warn_requested(
         return
 
     sender_id = message.from_user.id
+    admin = db_helpers.get_group_admin_with_permission(
+        database, sender_id, Permissions.CanWarn
+    )
 
-    if sender_id not in config.super_admins:
-        admin = admins.find_one(dict(user_chat_id=sender_id))
-        if admin is None:
-            await message.reply_text("You are not an admin of this group.")
-            return
-
-        if not admin.permissions.CanWarn:
-            await message.reply_text("You are not allowed to warn users.")
-            return
+    if not admin:
+        await message.reply_text("You are not allowed to warn users.")
+        return
 
     # admin can warn users ...
     if target_user.id == sender_id:
@@ -83,10 +83,30 @@ async def on_warn_requested(
         await reporter.report("Warning", text)
     else:
         warning.warns_count += 1
-        # TODO: ban on maximum warns
-        # if warning.warns_count + 1 >= config.max_warns:
-        #     await message.reply_text("User has reached maximum warns.")
-        #     return
+        if warning.warns_count + 1 >= config.maximum_warnings:
+            if Permissions.CanBan in admin.permissions:
+                await message.chat.restrict_member(
+                    target_user.id,
+                    ChatPermissions(),
+                    until_date=datetime.utcnow() + timedelta(days=1),
+                )
+                warning.warns_count = 0
+                warnings.update_model(warning)
+                await message.reply_text(
+                    "User {target_fn} has been banned for 1 day (maximum warns).".format(
+                        target_fn=target_user.first_name
+                    )
+                )
+                await reporter.report(
+                    "Ban",
+                    "User {target_fn} has been banned for 1 day (maximum warns).".format(
+                        target_fn=target_user.first_name
+                    ),
+                )
+                return
+            else:
+                await message.reply_text("You can't warn a user with maximum warns.")
+                return
 
         warnings.update_model(warning)
 

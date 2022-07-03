@@ -169,7 +169,19 @@ edit_permissions_handler = CallbackQueryHandler(
 )
 
 
-async def _close_editor(update: Update, _: ContextTypes.DEFAULT_TYPE):
+@async_injector_from_ctx
+async def _close_editor(
+    update: Update, _: ContextTypes.DEFAULT_TYPE, config: Configuration
+):
+    if not update.callback_query:
+        return
+
+    if not update.callback_query.from_user:
+        return
+
+    if update.callback_query.from_user.id not in config.super_admins:
+        return
+
     await update.callback_query.edit_message_text("Closed!")
 
 

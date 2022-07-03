@@ -49,7 +49,7 @@ application = ApplicationBuilder().token(bot_token).build()
 async def main():
     shahla.register_type(Database, lambda _: Database("shahla"))
     config = Configuration(
-        main_chat_id, bot_username, self_username, report_channel_id, bot_admins
+        main_chat_id, bot_username, self_username, report_channel_id, 5, bot_admins
     )
     shahla.register_type(
         Configuration, lambda s: s.request_instance(Database).set_up(config)
