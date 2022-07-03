@@ -40,11 +40,13 @@ bot_admins = helpers.get_from_env("SUPER_ADMINS", helpers.deserialize_list)
 mongo_username = helpers.get_from_env("MONGO_USERNAME")
 mongo_password = helpers.get_from_env("MONGO_PASSWORD")
 mongo_host = helpers.get_from_env("MONGO_HOST")
+session_string = helpers.get_from_env("SESSION_STRING")
 
 shahla = Shahla(
-    "ShahlaBot",
+    ":memory:",
     api_id,
     api_hash,
+    session_string=session_string,
     plugins={"root": "plugins", "exclude": ["bot_handlers"]},
 )
 
@@ -82,6 +84,9 @@ async def main():
     shahla.register_type(Application, lambda _: application)
 
     await shahla.start()
+
+    # ss = await shahla.export_session_string()
+    # print(ss)
 
     user_bot = await shahla.get_me()
     print(f"User bot is {user_bot.first_name}", user_bot.id)
