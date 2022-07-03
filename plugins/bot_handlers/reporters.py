@@ -6,7 +6,7 @@ logging.basicConfig(
 
 from typing import cast
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ChatMemberHandler
 
 from shahla import Shahla, async_injector_from_ctx
 from services.reporter import Reporter
@@ -21,7 +21,7 @@ Effective user: **{ev_name}** [`{ev_id}`]
 
 
 @async_injector_from_ctx
-async def chat_member_updated(
+async def _chat_member_updated(
     update: Update,
     _: ContextTypes.DEFAULT_TYPE,
     __: Shahla,
@@ -50,3 +50,8 @@ async def chat_member_updated(
             ev_id=cmu.from_user.id,
         ),
     )
+
+
+chat_member_updated_handler = ChatMemberHandler(
+    _chat_member_updated, ChatMemberHandler.ANY_CHAT_MEMBER
+)

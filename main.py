@@ -8,7 +8,7 @@ import asyncio
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ChatMemberHandler, InlineQueryHandler
+from telegram.ext import ApplicationBuilder
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -18,8 +18,12 @@ from shahla import Shahla, LifeTime
 from services.reporter import Reporter
 from services.database import Database
 from models.configuration import Configuration
-from plugins.bot_handlers.reporters import chat_member_updated
-from plugins.bot_handlers.permission_editor import open_permission_editor
+from plugins.bot_handlers.reporters import chat_member_updated_handler
+from plugins.bot_handlers.permission_editor import (
+    open_permission_editor_handler,
+    edit_permissions_handler,
+    close_editor_handler,
+)
 
 
 load_dotenv()
@@ -63,13 +67,10 @@ async def main():
 
     application.bot_data["shahla"] = shahla
 
-    chat_member_handler = ChatMemberHandler(
-        chat_member_updated, ChatMemberHandler.ANY_CHAT_MEMBER
-    )
-    application.add_handler(chat_member_handler)
-    application.add_handler(
-        InlineQueryHandler(open_permission_editor, pattern="^prmedtr")
-    )
+    application.add_handler(chat_member_updated_handler)
+    application.add_handler(open_permission_editor_handler)
+    application.add_handler(edit_permissions_handler)
+    application.add_handler(close_editor_handler)
 
     bot_info = await application.bot.get_me()
     print(f"User bot is {bot_info.first_name}", bot_info.id)
@@ -95,5 +96,10 @@ if __name__ == "__main__":
     aps.start()
     loop.run_until_complete(main())
     application.run_polling(
-        allowed_updates=[Update.MY_CHAT_MEMBER, Update.CHAT_MEMBER, Update.INLINE_QUERY]
+        allowed_updates=[
+            Update.MY_CHAT_MEMBER,
+            Update.CHAT_MEMBER,
+            Update.INLINE_QUERY,
+            Update.CALLBACK_QUERY,
+        ]
     )
