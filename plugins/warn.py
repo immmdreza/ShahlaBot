@@ -34,10 +34,18 @@ async def on_warn_requested(
     if not message.from_user:
         return
 
-    target_user = await shahla.resolve_target_user_from_command(message)
+    target_user, others = await shahla.resolve_target_user_and_others_from_command(
+        message
+    )
     if not target_user:
         await message.reply_text(
             "Please reply to a user or use the command in the format `/warn @username`."
+        )
+        return
+
+    if not any(others):
+        await message.reply_text(
+            "Please reply to a user or use the command in the format `/warn @username reason`."
         )
         return
 
@@ -65,7 +73,7 @@ async def on_warn_requested(
         return
 
     # check if there's a reason in command
-    reason = "No reason given."
+    reason = " ".join(others)
 
     # increase warning count
     warning = warnings.find_one(dict(user_chat_id=target_user.id))

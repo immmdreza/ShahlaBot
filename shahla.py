@@ -128,6 +128,35 @@ class Shahla(Client):
                 return message.reply_to_message.forward_from
         return None
 
+    async def resolve_target_user_and_others_from_command(
+        self, message: Message
+    ) -> tuple[User | None, list[str]]:
+        if message.command:
+            if len(message.command) > 2:
+                try:
+                    return (
+                        cast(User, await self.get_users(message.command[1])),
+                        message.command[2:],
+                    )
+                except BadRequest:
+                    return None, message.command[2:]
+
+        if message.reply_to_message:
+            if message.reply_to_message.from_user:
+                return (
+                    message.reply_to_message.from_user,
+                    message.command[1:],
+                )
+            if message.reply_to_message.forward_from:
+                return (
+                    message.reply_to_message.forward_from,
+                    message.command[1:],
+                )
+        return (
+            None,
+            message.command[1:],
+        )
+
 
 def async_injector(func: Callable[..., Any]):
     @functools.wraps(func)
