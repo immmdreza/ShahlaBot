@@ -5,6 +5,7 @@ logging.basicConfig(
 )
 
 import asyncio
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 from telegram import Update
@@ -36,6 +37,9 @@ extra_channel_id = helpers.get_from_env("EXTRA_CHANNEL_ID", int)
 bot_username = helpers.get_from_env("BOT_USERNAME")
 self_username = helpers.get_from_env("SELF_USERNAME")
 bot_admins = helpers.get_from_env("SUPER_ADMINS", helpers.deserialize_list)
+mongo_username = helpers.get_from_env("MONGO_USERNAME")
+mongo_password = helpers.get_from_env("MONGO_PASSWORD")
+mongo_host = helpers.get_from_env("MONGO_HOST")
 
 shahla = Shahla(
     "ShahlaBot",
@@ -48,7 +52,16 @@ application = ApplicationBuilder().token(bot_token).build()
 
 
 async def main():
-    shahla.register_type(Database, lambda _: Database("shahla"))
+    if mongo_username and mongo_password and mongo_host:
+        host_addr = "mongodb://%s:%s@%s" % (
+            quote_plus(mongo_username),
+            quote_plus(mongo_password),
+            mongo_host,
+        )
+    else:
+        host_addr = None
+
+    shahla.register_type(Database, lambda _: Database("shahla", host_addr))
     config = Configuration(
         main_chat_id,
         bot_username,
