@@ -8,7 +8,7 @@ import asyncio
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder
+from telegram.ext import ApplicationBuilder, Application
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -32,6 +32,7 @@ api_hash = helpers.get_from_env("API_HASH")
 bot_token = helpers.get_from_env("BOT_TOKEN")
 main_chat_id = helpers.get_from_env("MAIN_CHAT_ID", int)
 report_channel_id = helpers.get_from_env("REPORT_CHANNEL_ID", int)
+extra_channel_id = helpers.get_from_env("EXTRA_CHANNEL_ID", int)
 bot_username = helpers.get_from_env("BOT_USERNAME")
 self_username = helpers.get_from_env("SELF_USERNAME")
 bot_admins = helpers.get_from_env("SUPER_ADMINS", helpers.deserialize_list)
@@ -49,7 +50,13 @@ application = ApplicationBuilder().token(bot_token).build()
 async def main():
     shahla.register_type(Database, lambda _: Database("shahla"))
     config = Configuration(
-        main_chat_id, bot_username, self_username, report_channel_id, 5, bot_admins
+        main_chat_id,
+        bot_username,
+        self_username,
+        report_channel_id,
+        extra_channel_id,
+        5,
+        bot_admins,
     )
     shahla.register_type(
         Configuration, lambda s: s.request_instance(Database).set_up(config)
@@ -59,6 +66,7 @@ async def main():
         lambda s: Reporter(s, s.request_instance(Configuration).report_chat_id),
         LifeTime.Scoped,
     )
+    shahla.register_type(Application, lambda _: application)
 
     await shahla.start()
 

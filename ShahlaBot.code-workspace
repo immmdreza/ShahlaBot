@@ -21,6 +21,7 @@
 			"bson",
 			"creational",
 			"dotenv",
+			"fwded",
 			"jobstores",
 			"Jzbc",
 			"prmedtr",
@@ -28,6 +29,7 @@
 			"pypattyrn",
 			"pyrogram",
 			"pytz",
+			"setextra",
 			"Shahla"
 		]
 		

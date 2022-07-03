@@ -1,4 +1,3 @@
-from typing import Optional
 from .model_base import ModelBase, dataclass
 
 
