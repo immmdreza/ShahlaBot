@@ -66,8 +66,8 @@ class Collection(Generic[_T]):
 
 
 class Database:
-    def __init__(self, __name: str | None = None):
-        self.client = pymongo.mongo_client.MongoClient[dict[str, Any]]()
+    def __init__(self, __name: str | None = None, __host: str | None = None):
+        self.client = pymongo.mongo_client.MongoClient[dict[str, Any]](__host)
         self.db = self.client.get_database(__name)
 
         self._configurations: Optional[Collection[Configuration]] = None
