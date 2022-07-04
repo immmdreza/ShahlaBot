@@ -1,12 +1,13 @@
 from typing import Any, Generator, Generic, Iterable, Optional, TypeVar
 
-import pymongo.mongo_client
 import pymongo.collection
+import pymongo.mongo_client
 
 from models import ModelBase
 from models.configuration import Configuration
-from models.user_warnings import UserWarning
+from models.extra_info import ExtraInfo
 from models.group_admin import GroupAdmin
+from models.user_warnings import UserWarning
 
 
 _T = TypeVar("_T", bound=ModelBase)
@@ -46,7 +47,7 @@ class Collection(Generic[_T]):
 
     def update_model(self, update: _T, *args: Any, **kwargs: Any):
         flt = {"_id": update.id}
-        return self.update_one(flt, update.serialize(), *args, **kwargs)
+        return self.update_one(flt, {"$set": update.serialize()}, *args, **kwargs)
 
     def update_one(self, filter: Any, update: Any, *args: Any, **kwargs: Any):
         return self._collection.update_one(filter, update, *args, **kwargs)
@@ -65,13 +66,14 @@ class Collection(Generic[_T]):
 
 
 class Database:
-    def __init__(self, __name: str | None = None):
-        self.client = pymongo.mongo_client.MongoClient[dict[str, Any]]()
+    def __init__(self, __name: str | None = None, __host: str | None = None):
+        self.client = pymongo.mongo_client.MongoClient[dict[str, Any]](__host)
         self.db = self.client.get_database(__name)
 
         self._configurations: Optional[Collection[Configuration]] = None
         self._user_warnings: Optional[Collection[UserWarning]] = None
         self._group_admins: Optional[Collection[GroupAdmin]] = None
+        self._extra_infos: Optional[Collection[ExtraInfo]] = None
 
     def get_collection(self, entity_type: type[_T]) -> Collection[_T]:
         return Collection(entity_type, self.db.get_collection(entity_type.__name__))
@@ -93,6 +95,12 @@ class Database:
         if self._group_admins is None:
             self._group_admins = self.get_collection(GroupAdmin)
         return self._group_admins
+
+    @property
+    def extra_infos(self) -> Collection[ExtraInfo]:
+        if self._extra_infos is None:
+            self._extra_infos = self.get_collection(ExtraInfo)
+        return self._extra_infos
 
     def set_up(self, config: Configuration):
         col = self.configurations

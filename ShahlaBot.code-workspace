@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
+		"python.linting.enabled": false,
 		"python.analysis.typeCheckingMode": "basic",
 		"python.formatting.provider": "black",
 		"python.linting.mypyEnabled": true,
@@ -20,12 +21,15 @@
 			"bson",
 			"creational",
 			"dotenv",
+			"fwded",
 			"jobstores",
 			"Jzbc",
+			"prmedtr",
 			"pymongo",
 			"pypattyrn",
 			"pyrogram",
 			"pytz",
+			"setextra",
 			"Shahla"
 		]
 		
