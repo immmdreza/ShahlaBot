@@ -283,7 +283,7 @@ def async_injector_from_ctx(func: Callable[..., Any]) -> Callable[..., Any]:
                 )
             except StopIteration:
                 raise ValueError("No shahla instance found.")
-        shahla = grab_from.bot_data["shahla"]
+        shahla: Shahla = grab_from.bot_data["shahla"]
 
         resolved_types: dict[str, Scope[Any]] = {}
         for i, (key, value) in enumerate(signature.parameters.items()):
@@ -298,6 +298,7 @@ def async_injector_from_ctx(func: Callable[..., Any]) -> Callable[..., Any]:
 
             if value.annotation == Shahla:
                 kwargs[key] = shahla
+                continue
 
             instance = shahla.create_scope_for(value.annotation, key)
             resolved_types[key] = instance

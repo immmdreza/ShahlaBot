@@ -1,5 +1,3 @@
-
-from datetime import datetime, timedelta
 from pyrogram.types import Message, ChatPermissions
 from pyrogram.filters import command, group
 
@@ -12,9 +10,7 @@ from models.configuration import Configuration
 
 
 UNMUTE_MESSAGE_FMT = (
-    "User {target_fn} has been unmuted "
-    "By: {admin_fn}\n"
-    "Reason: {reason}\n"
+    "User {target_fn} has been unmuted " "By: {admin_fn}\n" "Reason: {reason}\n"
 )
 
 
@@ -77,20 +73,20 @@ async def on_unmute_requested(
         target_fn=target_user.first_name,
         admin_fn=message.from_user.first_name,
         reason=reason,
-        )
+    )
     await shahla.restrict_chat_member(
         message.chat.id,
         target_user.id,
         ChatPermissions(
-            can_send_messages = True,
-            can_send_media_messages = True,
-            can_send_other_messages = True,
-            can_send_polls = True,
-            can_add_web_page_previews = True,
-            can_change_info = True,
-            can_invite_users  = True,
-            can_pin_messages = True
-        )
+            can_send_messages=True,
+            can_send_media_messages=True,
+            can_send_other_messages=True,
+            can_send_polls=True,
+            can_add_web_page_previews=True,
+            can_change_info=True,
+            can_invite_users=True,
+            can_pin_messages=True,
+        ),
     )
     await message.reply_text(text)
     await reporter.report("Unmuted", text)

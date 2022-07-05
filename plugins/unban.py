@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-from pyrogram.types import Message, ChatPermissions
+from pyrogram.types import Message
 from pyrogram.filters import command, group
 
 from models.group_admin import Permissions
@@ -11,9 +10,7 @@ from models.configuration import Configuration
 
 
 UNBAN_MESSAGE_FMT = (
-    "User {target_fn} has been unban "
-    "By: {admin_fn}\n"
-    "Reason: {reason}\n"
+    "User {target_fn} has been unbanned " "By: {admin_fn}\n" "Reason: {reason}\n"
 )
 
 
@@ -76,10 +73,7 @@ async def on_unban_requested(
         target_fn=target_user.first_name,
         admin_fn=message.from_user.first_name,
         reason=reason,
-        )
-    await shahla.unban_chat_member(
-        message.chat.id,
-        target_user.id
     )
+    await shahla.unban_chat_member(message.chat.id, target_user.id)
     await message.reply_text(text)
-    await reporter.report("unban", text)
+    await reporter.report("Unban", text)

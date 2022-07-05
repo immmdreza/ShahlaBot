@@ -96,7 +96,7 @@ async def on_warn_requested(
                 await message.chat.restrict_member(
                     target_user.id,
                     ChatPermissions(),
-                    until_date=datetime.utcnow() + timedelta(days=1),
+                    until_date=datetime.now() + timedelta(days=1),
                 )
                 warning.warns_count = 0
                 warnings.update_model(warning)
