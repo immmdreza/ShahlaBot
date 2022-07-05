@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from pyrogram.filters import command, group
-from pyrogram.types import Message , ChatPermissions
+from pyrogram.types import Message, ChatPermissions
 from pyrogram.errors import BadRequest
 
 import services.database_helpers as db_helpers
@@ -78,14 +78,14 @@ async def mute(
         await shahla.restrict_chat_member(
             message.chat.id,
             target_user.id,
-            ChatPermissions(can_send_messages = False),
+            ChatPermissions(can_send_messages=False),
             until_date=datetime.utcnow() + parsed_time,
         )
         await message.reply_text(
             f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
         )
         await reporter.report(
-            "Ban",
+            "Mute",
             f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}",
         )
     except BadRequest as e:
