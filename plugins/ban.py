@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pyrogram.filters import command, group
 from pyrogram.types import Message
 from pyrogram.errors import BadRequest
+from pyrogram.utils import zero_datetime
 
 import services.database_helpers as db_helpers
 from models.configuration import Configuration
@@ -77,7 +78,9 @@ async def ban(
     try:
         await message.chat.ban_member(
             target_user.id,
-            until_date=datetime.utcnow() + parsed_time,
+            until_date=zero_datetime()
+            if parsed_time == timedelta.max
+            else (datetime.now() + parsed_time),
         )
         await message.reply_text(
             f"User {target_user.first_name} banned by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"

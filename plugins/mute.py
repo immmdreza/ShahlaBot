@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pyrogram.filters import command, group
 from pyrogram.types import Message, ChatPermissions
 from pyrogram.errors import BadRequest
+from pyrogram.utils import zero_datetime
 
 import services.database_helpers as db_helpers
 from models.configuration import Configuration
@@ -75,11 +76,16 @@ async def mute(
         return
 
     try:
+        till_date = (
+            zero_datetime()
+            if parsed_time == timedelta.max
+            else (datetime.now() + parsed_time)
+        )
         await shahla.restrict_chat_member(
             message.chat.id,
             target_user.id,
             ChatPermissions(can_send_messages=False),
-            until_date=datetime.utcnow() + parsed_time,
+            until_date=till_date,
         )
         await message.reply_text(
             f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
