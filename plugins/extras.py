@@ -172,5 +172,3 @@ async def get_extra_requested(
         await bot.copy_message(
             message.chat.id, config.extra_channel_id, extra.extra_message_id
         )
-    else:
-        await message.reply_text(f"Extra `{extra_name}` has not been saved.")
