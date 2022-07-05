@@ -60,7 +60,7 @@ async def ban(
         await message.reply_text("You're missing permissions.")
         return
 
-    # admin can warn users ...
+    # admin can ban users ...
     if target_user.id == sender_id:
         await message.reply_text("You can't ban yourself.")
         return

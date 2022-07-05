@@ -7,7 +7,6 @@ import services.database_helpers as db_helpers
 from shahla import Shahla, async_injector
 from services.reporter import Reporter
 from services.database import Database
-from models.user_warnings import UserWarning
 from models.configuration import Configuration
 
 
@@ -20,14 +19,13 @@ MUTE_MESSAGE_FMT = (
 
 @Shahla.on_message(command("mute") & group)  # type: ignore
 @async_injector
-async def on_warn_requested(
+async def on_mute_requested(
     shahla: Shahla,
     message: Message,
     config: Configuration,
     reporter: Reporter,
     database: Database,
 ):
-#    warnings = database.user_warnings
     admins = database.group_admins
 
     if not message.from_user:
@@ -80,9 +78,9 @@ async def on_warn_requested(
         reason=reason,
         )
     await shahla.restrict_chat_member(
-    chat_id=message.chat.id,
-    user_id=target_user.id,
-    permissions = ChatPermissions(can_send_message=False)
+    message.chat.id,
+    target_user.id,
+    ChatPermissions(can_send_messages=False)
 )
     await message.reply_text(text)
     await reporter.report("muted", text)
