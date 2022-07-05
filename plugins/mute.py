@@ -1,58 +1,63 @@
 from datetime import datetime, timedelta
-from pyrogram.types import Message, ChatPermissions
+
 from pyrogram.filters import command, group
+from pyrogram.types import Message , ChatPermissions
+from pyrogram.errors import BadRequest
 
-from models.group_admin import Permissions
 import services.database_helpers as db_helpers
-from shahla import Shahla, async_injector
-from services.reporter import Reporter
-from services.database import Database
 from models.configuration import Configuration
-
-
-MUTE_MESSAGE_FMT = (
-    "User {target_fn} has been muted "
-    "By: {admin_fn}\n"
-    "Reason: {reason}\n"
-)
+from models.group_admin import Permissions
+from services.database import Database
+from services.reporter import Reporter
+from shahla import Shahla, async_injector
+from helpers import parse_time
 
 
 @Shahla.on_message(command("mute") & group)  # type: ignore
 @async_injector
-async def on_mute_requested(
+async def mute(
     shahla: Shahla,
     message: Message,
+    database: Database,
     config: Configuration,
     reporter: Reporter,
-    database: Database,
 ):
     admins = database.group_admins
 
     if not message.from_user:
         return
 
+    sender_id = message.from_user.id
+
     target_user, others = await shahla.resolve_target_user_and_others_from_command(
         message
     )
-    if not target_user:
-        await message.reply_text(
-            "Please reply to a user or use the command in the format `/mute @username`."
-        )
-        return
 
-    if not any(others):
+    if target_user is None or not any(others):
         await message.reply_text(
             "Please reply to a user or use the command in the format `/mute @username reason`."
         )
         return
 
-    sender_id = message.from_user.id
+    parsed_time = parse_time(others[0])
+    if parsed_time is None or parsed_time == timedelta():
+        parsed_time = timedelta.max
+        duration_str = "Forever"
+        reason = " ".join(others)
+    else:
+        reason = " ".join(others[1:])
+        duration_str = str(parsed_time)
+
+    required_permissions = Permissions.CanMiniMute
+    if parsed_time > timedelta(hours=1):
+        required_permissions = Permissions.CanMute
+
     admin = db_helpers.get_group_admin_with_permission(
-        database, sender_id, Permissions.CanMute
+        database, sender_id, required_permissions
     )
 
-    if not admin:
-        await message.reply_text("You are not allowed to mute users.")
+    if admin is None:
+        await message.reply_text("You're missing permissions.")
         return
 
     # admin can mute users ...
@@ -69,18 +74,19 @@ async def on_mute_requested(
         await message.reply_text("You can't mute an admin.")
         return
 
-    # check if there's a reason in command
-    reason = " ".join(others)
-
-    text = MUTE_MESSAGE_FMT.format(
-        target_fn=target_user.first_name,
-        admin_fn=message.from_user.first_name,
-        reason=reason,
+    try:
+        await shahla.restrict_chat_member(
+            message.chat.id,
+            target_user.id,
+            ChatPermissions(can_send_messages = False),
+            until_date=datetime.utcnow() + parsed_time,
         )
-    await shahla.restrict_chat_member(
-    message.chat.id,
-    target_user.id,
-    ChatPermissions(can_send_messages=False)
-)
-    await message.reply_text(text)
-    await reporter.report("muted", text)
+        await message.reply_text(
+            f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
+        )
+        await reporter.report(
+            "Ban",
+            f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}",
+        )
+    except BadRequest as e:
+        await message.reply_text(f"Can't mute: {e.MESSAGE}")
