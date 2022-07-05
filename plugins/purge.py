@@ -1,3 +1,9 @@
+"""
+Command: /purge
+Description: Deletes all messages from replied message till this message.
+Permissions: NiniAdmin+
+"""
+
 from pyrogram.filters import command, group, reply
 from pyrogram.types import Message
 from models.group_admin import Permissions
