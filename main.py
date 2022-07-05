@@ -108,14 +108,14 @@ if __name__ == "__main__":
 
     aps.add_job(
         lock_service.notify_before_lock,
-        # Every day at 23:30 (Asia/Tehran), the group will be notified (30 min) before lock.
-        CronTrigger(hour=23, minute=30, timezone="Asia/Tehran"),
+        # Every day at 00:30 (Asia/Tehran), the group will be notified (30 min) before lock.
+        CronTrigger(hour=0, minute=30, timezone="Asia/Tehran"),
         kwargs={"shahla": shahla},
     )
     aps.add_job(
         lock_service.group_locker,
-        # Every day at 24:00 PM or 00:00 AM (Asia/Tehran), the group will be locked
-        CronTrigger(hour=0, timezone="Asia/Tehran"),
+        # Every day at 01:00 AM (Asia/Tehran), the group will be locked
+        CronTrigger(hour=1, timezone="Asia/Tehran"),
         kwargs={"shahla": shahla},
     ),
 
