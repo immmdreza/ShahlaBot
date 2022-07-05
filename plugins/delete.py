@@ -35,6 +35,7 @@ async def on_unmute_requested(
     # admin can delete messages ...
     if message.reply_to_message:
         message.reply_to_message.delete()
+        message.delete()
     else:
         await message.reply_text("please reply to a message")
 
