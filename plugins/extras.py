@@ -56,7 +56,12 @@ async def set_extra_requested(
 
         extra = extra_list.find_one({"extra_name": extra_name})
         if extra:
-            await bot.delete_message(config.extra_channel_id, extra.extra_message_id)
+            try:
+                await bot.delete_message(
+                    config.extra_channel_id, extra.extra_message_id
+                )
+            except:
+                pass
 
             extra.extra_message_id = fwded_message.message_id
             extra_list.update_model(extra)
