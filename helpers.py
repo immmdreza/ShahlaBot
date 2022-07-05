@@ -1,5 +1,7 @@
+from datetime import timedelta
 import json
 import os
+import re
 from typing import Any, Callable, TypeVar, overload
 
 
@@ -24,3 +26,20 @@ def get_from_env(key: str, caster: Any = None) -> Any:
 
 def deserialize_list(string: str) -> list[Any]:
     return json.loads(string)
+
+
+_TIME_REGEX = re.compile(
+    r"((?P<hours>\d+?)hr)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?"
+)
+
+
+def parse_time(time_str: str) -> timedelta | None:
+    parts = _TIME_REGEX.match(time_str)
+    if not parts:
+        return
+    parts = parts.groupdict()
+    time_params = {}
+    for name, param in parts.items():
+        if param:
+            time_params[name] = int(param)
+    return timedelta(**time_params)

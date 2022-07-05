@@ -5,11 +5,28 @@ from .model_base import ModelBase, dataclass, field
 class Permissions(IntFlag):
     Nothing = 0
     CanWarn = 1
+    """Warn users"""
+
     CanBan = 2
+    """Can permanently ban users"""
+
     CanMute = 4
+    """CAn permanently mute users"""
+
     CanDelete = 8
+    """Can delete message"""
+
     CanPin = 16
+    """Can pin message"""
+
     CanSaveExtra = 32
+    """Can save extra data"""
+
+    CanMiniMute = 64
+    """Can mute users for a short time ( less than one hour )"""
+
+    CanMiniBan = 128
+    """Can ban users for a short time ( less than one hour )"""
 
     @staticmethod
     def all():
