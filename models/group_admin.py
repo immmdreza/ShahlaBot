@@ -4,12 +4,36 @@ from .model_base import ModelBase, dataclass, field
 
 class Permissions(IntFlag):
     Nothing = 0
-    CanWarn = 1
-    CanBan = 2
-    CanMute = 4
-    CanDelete = 8
-    CanPin = 16
-    CanSaveExtra = 32
+
+    CanDelete = 1
+    """Can delete message"""
+
+    CanPin = 2
+    """Can pin message"""
+
+    CanWarn = 4
+    """Warn users"""
+
+    CanMiniMute = 8
+    """Can mute users for a short time ( less than one hour )"""
+
+    CanMiniBan = 16
+    """Can ban users for a short time ( less than one hour )"""
+
+    CanBan = 32
+    """Can permanently ban users"""
+
+    CanMute = 64
+    """CAn permanently mute users"""
+
+    CanSaveExtra = 128
+    """Can save extra data"""
+
+    NiniAdmin = CanDelete | CanPin | CanWarn | CanMiniMute | CanMiniBan
+    """Can do everything except ban and mute"""
+
+    Admin = NiniAdmin | CanBan | CanMute | CanSaveExtra
+    """Can do everything"""
 
     @staticmethod
     def all():
@@ -32,6 +56,10 @@ class Permissions(IntFlag):
             Permissions.CanDelete: "Can Delete",
             Permissions.CanPin: "Can Pin",
             Permissions.CanSaveExtra: "Can Save Extra",
+            Permissions.CanMiniMute: "Can Mini Mute",
+            Permissions.CanMiniBan: "Can Mini Ban",
+            Permissions.NiniAdmin: "Nini Admin",
+            Permissions.Admin: "Admin",
         }.get(permissions, str(permissions))
 
 

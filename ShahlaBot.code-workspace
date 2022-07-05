@@ -17,6 +17,7 @@
 		],
 		"python.terminal.activateEnvInCurrentTerminal": true,
 		"cSpell.words": [
+			"adminlist",
 			"apscheduler",
 			"bson",
 			"creational",
@@ -24,13 +25,16 @@
 			"fwded",
 			"jobstores",
 			"Jzbc",
+			"Nini",
 			"prmedtr",
 			"pymongo",
 			"pypattyrn",
 			"pyrogram",
 			"pytz",
 			"setextra",
-			"Shahla"
+			"Shahla",
+			"stsup",
+			"unwarn"
 		]
 		
 	}

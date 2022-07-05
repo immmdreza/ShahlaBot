@@ -133,13 +133,14 @@ class Shahla(Client):
     ) -> tuple[User | None, list[str]]:
         if message.command:
             if len(message.command) > 2:
-                try:
-                    return (
-                        cast(User, await self.get_users(message.command[1])),
-                        message.command[2:],
-                    )
-                except BadRequest:
-                    return None, message.command[2:]
+                if message.command[1].startswith("@") or message.command[1].isnumeric():
+                    try:
+                        return (
+                            cast(User, await self.get_users(message.command[1])),
+                            message.command[2:],
+                        )
+                    except BadRequest:
+                        return None, message.command[2:]
 
         if message.reply_to_message:
             if message.reply_to_message.from_user:
@@ -282,7 +283,7 @@ def async_injector_from_ctx(func: Callable[..., Any]) -> Callable[..., Any]:
                 )
             except StopIteration:
                 raise ValueError("No shahla instance found.")
-        shahla = grab_from.bot_data["shahla"]
+        shahla: Shahla = grab_from.bot_data["shahla"]
 
         resolved_types: dict[str, Scope[Any]] = {}
         for i, (key, value) in enumerate(signature.parameters.items()):
@@ -297,6 +298,7 @@ def async_injector_from_ctx(func: Callable[..., Any]) -> Callable[..., Any]:
 
             if value.annotation == Shahla:
                 kwargs[key] = shahla
+                continue
 
             instance = shahla.create_scope_for(value.annotation, key)
             resolved_types[key] = instance
