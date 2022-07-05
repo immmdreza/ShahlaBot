@@ -146,7 +146,7 @@ async def list_extra_requested(
     )
 
 
-@Shahla.on_message(regex("^#[^\n ].*$"))  # type: ignore
+@Shahla.on_message(regex("^#.*$"))  # type: ignore
 @async_injector
 async def get_extra_requested(
     _: Shahla,
