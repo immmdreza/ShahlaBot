@@ -42,6 +42,7 @@ async def on_purge_requested(
     deleted = await shahla.delete_messages(
         message.chat.id, range(replied_message_id, message.id)
     )
+    await message.delete()
     await message.reply_text(f"Deleted {deleted} messages.")
     await reporter.report(
         "Purge",

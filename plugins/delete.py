@@ -28,6 +28,7 @@ async def on_delete_requested(
     # admin can delete messages ...
     if message.reply_to_message:
         await message.reply_to_message.delete()
+        await message.delete()
     else:
         await message.reply_text("please reply to a message")
 
