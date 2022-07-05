@@ -11,9 +11,10 @@ async def notify_before_lock(shahla: Shahla, configuration: Configuration):
     if not group_id:
         return
 
-    await shahla.send_message(
+    a = await shahla.send_message(
         group_id, "یادتون نره گروه راس ساعت 24، بسته میشه! سریع جمش کنید."
     )
+    a.pin()
 
 
 @async_injector
@@ -22,7 +23,8 @@ async def group_locker(shahla: Shahla, config: Configuration):
     if not group_id:
         return
 
-    await shahla.send_message(group_id, "زمان بازی کردن به پایان رسیده است")
+    a = await shahla.send_message(group_id, "زمان بازی کردن به پایان رسیده است")
+    a.pin()
     await shahla.restrict_chat_member(
         group_id,
         175844556,

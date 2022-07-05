@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from pyrogram.filters import command, group
-from pyrogram.types import Message
+from pyrogram.types import Message , ChatPermissions
 from pyrogram.errors import BadRequest
 
 import services.database_helpers as db_helpers
@@ -13,9 +13,9 @@ from shahla import Shahla, async_injector
 from helpers import parse_time
 
 
-@Shahla.on_message(command("ban") & group)  # type: ignore
+@Shahla.on_message(command("mute") & group)  # type: ignore
 @async_injector
-async def ban(
+async def mute(
     shahla: Shahla,
     message: Message,
     database: Database,
@@ -35,7 +35,7 @@ async def ban(
 
     if target_user is None or not any(others):
         await message.reply_text(
-            "Please reply to a user or use the command in the format `/ban @username reason`."
+            "Please reply to a user or use the command in the format `/mute @username reason`."
         )
         return
 
@@ -48,9 +48,9 @@ async def ban(
         reason = " ".join(others[1:])
         duration_str = str(parsed_time)
 
-    required_permissions = Permissions.CanMiniBan
+    required_permissions = Permissions.CanMiniMute
     if parsed_time > timedelta(hours=1):
-        required_permissions = Permissions.CanBan
+        required_permissions = Permissions.CanMute
 
     admin = db_helpers.get_group_admin_with_permission(
         database, sender_id, required_permissions
@@ -60,31 +60,33 @@ async def ban(
         await message.reply_text("You're missing permissions.")
         return
 
-    # admin can ban users ...
+    # admin can mute users ...
     if target_user.id == sender_id:
-        await message.reply_text("You can't ban yourself.")
+        await message.reply_text("You can't mute yourself.")
         return
 
     if target_user in config.super_admins:
-        await message.reply_text("You can't ban a super admin.")
+        await message.reply_text("You can't mute a super admin.")
         return
 
     # check if target is not an admin
     if admins.exists(dict(user_chat_id=target_user.id)):
-        await message.reply_text("You can't ban an admin.")
+        await message.reply_text("You can't mute an admin.")
         return
 
     try:
-        await message.chat.ban_member(
+        await shahla.restrict_chat_member(
+            message.chat.id,
             target_user.id,
+            ChatPermissions(can_send_messages = False),
             until_date=datetime.utcnow() + parsed_time,
         )
         await message.reply_text(
-            f"User {target_user.first_name} banned by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
+            f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
         )
         await reporter.report(
             "Ban",
-            f"User {target_user.first_name} banned by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}",
+            f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}",
         )
     except BadRequest as e:
-        await message.reply_text(f"Can't ban: {e.MESSAGE}")
+        await message.reply_text(f"Can't mute: {e.MESSAGE}")
