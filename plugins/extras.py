@@ -1,9 +1,9 @@
 from telegram.ext import Application, ExtBot
 from pyrogram.types import Message
 from pyrogram.filters import command, reply, regex
+
 from models.extra_info import ExtraInfo
 from models.group_admin import Permissions
-from shekar import shekar
 import services.database_helpers as db_helpers
 from models.configuration import Configuration
 from services.database import Database
@@ -194,24 +194,5 @@ async def get_extra_requested(
             message.chat.id,
             config.extra_channel_id,
             extra.extra_message_id,
-            reply_to_message_id = message.id
+            reply_to_message_id=message.id,
         )
-    if message.text in ["#ch","#شکار"]:
-        await message.pin()
-        games = database.game_infos
-        game = games.find_one({"chat_id": message.chat.id})
-        game.shekar_user_id = target_user.id
-        games.update_model(game)
-        target_user = await _.resolve_target_user_from_command(message)
-
-        await message.reply_text(
-            f"🎉 کاربر {target_user.first_name} به عنوان شکار در این بازی انتخاب شد."
-        )
-        await reporter.report_full_by_user(
-            "Shekar Set",
-            f"\n{target_user.first_name} به عنوان شکار در این بازی انتخاب شد.",
-            message.from_user,
-            target_user,
-        )
-
-

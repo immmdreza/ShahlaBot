@@ -1,9 +1,11 @@
-from pyrogram.types import Message
+import asyncio
+
 from pyrogram.filters import command, group
+from pyrogram.types import Message
+
+import services.database_helpers as db_helpers
 from models.group_admin import Permissions
 from services.database import Database
-import asyncio
-import services.database_helpers as db_helpers
 from services.reporter import Reporter
 from shahla import Shahla, async_injector
 
@@ -54,11 +56,13 @@ async def shekar(
         message.from_user,
         target_user,
     )
+    if message.reply_to_message:
+        await message.reply_to_message.pin()
 
 
 @Shahla.on_message(command("ski") & group)  # type: ignore
 @async_injector
-async def ski(_: Shahla, message: Message, database: Database):
+async def ski(shahla: Shahla, message: Message, database: Database):
     # A command that only saved shekar can use
     if not message.from_user:
         return
@@ -94,10 +98,10 @@ async def ski(_: Shahla, message: Message, database: Database):
             # set ski text
             game.ski_text = ski_text
             database.game_infos.update_model(game)
-            for i in range(3):
-                await _.send_message(
-                message.chat.id,
-                """‼️توجه     توجه ‼️
+            for _ in range(3):
+                await shahla.send_message(
+                    message.chat.id,
+                    f"""‼️توجه     توجه ‼️
 
 👇🏼 رای شکارچی 💂‍♂👇🏼
 
@@ -105,15 +109,14 @@ async def ski(_: Shahla, message: Message, database: Database):
 ⚔️  {ski_text}  ⚔️
 
 
-✊🏼روستایی ها اسکی برین🏂"""
-                            
+✊🏼روستایی ها اسکی برین🏂""",
                 )
-                asyncio.sleep(1)
+                await asyncio.sleep(1)
     else:
         # cast ski text
         if game.ski_text:
             await message.reply_text(
-                """‼️توجه     توجه ‼️
+                f"""‼️توجه     توجه ‼️
 
 👇🏼 رای شکارچی 💂‍♂👇🏼
 
