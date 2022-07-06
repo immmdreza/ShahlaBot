@@ -91,4 +91,6 @@ async def on_un_warn_requested(
                 warns_count=warning.warns_count,
             )
             await message.reply_text(text)
-            await reporter.report("Un_Warning", text)
+            await reporter.report_full_by_user(
+                "Un_Warning", text, message.from_user, target_user
+            )

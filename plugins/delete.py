@@ -32,6 +32,8 @@ async def on_delete_requested(
     else:
         await message.reply_text("please reply to a message")
 
-    await reporter.report(
-        "Delete", f"\n{message.from_user.first_name}) deleted a message"
+    await reporter.report_full_by_user(
+        "Delete",
+        f"\n{message.from_user.first_name}) deleted a message",
+        message.from_user,
     )

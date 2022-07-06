@@ -74,8 +74,10 @@ async def set_extra_requested(
     await message.reply_text(
         f"Extra(s) `{', '.join(extra_names)}` has been saved. You can now use it with `{', '.join(f'#{x}' for x in extra_names)}`."
     )
-    await reporter.report(
-        "Extra saved", f"Extra `{', '.join(extra_names)}` has been saved."
+    await reporter.report_full_by_user(
+        "Extra saved",
+        f"Extra `{', '.join(extra_names)}` has been saved.",
+        message.from_user,
     )
 
 
@@ -125,8 +127,10 @@ async def del_extra_requested(
             extra_list.delete_one({"extra_name": extra_name})
 
     await message.reply_text(f"Extra(s) `{', '.join(extra_names)}` has been deleted.")
-    await reporter.report(
-        "Extra deleted", f"Extra `{', '.join(extra_names)}` has been deleted."
+    await reporter.report_full_by_user(
+        "Extra deleted",
+        f"Extra `{', '.join(extra_names)}` has been deleted.",
+        message.from_user,
     )
 
 

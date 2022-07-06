@@ -4,12 +4,15 @@ from models.group_admin import Permissions
 from services.database import Database
 
 import services.database_helpers as db_helpers
+from services.reporter import Reporter
 from shahla import Shahla, async_injector
 
 
 @Shahla.on_message(command("shekar") & group)  # type: ignore
 @async_injector
-async def shekar(shahla: Shahla, message: Message, database: Database):
+async def shekar(
+    shahla: Shahla, message: Message, database: Database, reporter: Reporter
+):
 
     if not message.from_user:
         return
@@ -44,6 +47,12 @@ async def shekar(shahla: Shahla, message: Message, database: Database):
 
     await message.reply_text(
         f"🎉 کاربر {target_user.first_name} به عنوان شکار در این بازی انتخاب شد."
+    )
+    await reporter.report_full_by_user(
+        "Shekar Set",
+        f"\n{target_user.first_name} به عنوان شکار در این بازی انتخاب شد.",
+        message.from_user,
+        target_user,
     )
 
 
