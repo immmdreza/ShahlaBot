@@ -2,7 +2,7 @@ from pyrogram.types import Message
 from pyrogram.filters import command, group
 from models.group_admin import Permissions
 from services.database import Database
-
+import asyncio
 import services.database_helpers as db_helpers
 from services.reporter import Reporter
 from shahla import Shahla, async_injector
@@ -94,16 +94,34 @@ async def ski(_: Shahla, message: Message, database: Database):
             # set ski text
             game.ski_text = ski_text
             database.game_infos.update_model(game)
+            for i in range(3):
+                await _.send_message(
+                message.chat.id,
+                """‼️توجه     توجه ‼️
 
-            await message.reply_text(
-                "Everyone, listen up to the **CultistHunter** of village!\n\n"
-                f"{ski_text}"
-            )
+👇🏼 رای شکارچی 💂‍♂👇🏼
+
+
+⚔️  {ski_text}  ⚔️
+
+
+✊🏼روستایی ها اسکی برین🏂"""
+                            
+                )
+                asyncio.sleep(1)
     else:
         # cast ski text
         if game.ski_text:
             await message.reply_text(
-                "Here is the **CultistHunter**'s order:\n" + game.ski_text
+                """‼️توجه     توجه ‼️
+
+👇🏼 رای شکارچی 💂‍♂👇🏼
+
+
+⚔️  {ski_text}  ⚔️
+
+
+✊🏼روستایی ها اسکی برین🏂"""
             )
         else:
             await message.reply_text("🌭 There's nothing to ski from!")

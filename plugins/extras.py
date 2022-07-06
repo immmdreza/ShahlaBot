@@ -190,5 +190,9 @@ async def get_extra_requested(
     if extra:
         bot: ExtBot = application.bot
         await bot.copy_message(
-            message.chat.id, config.extra_channel_id, extra.extra_message_id
+            message.chat.id,
+            config.extra_channel_id,
+            extra.extra_message_id,
+            reply_to_message_id = message.id
         )
+
