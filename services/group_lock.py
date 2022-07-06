@@ -31,5 +31,5 @@ async def group_locker(shahla: Shahla, config: Configuration):
         ChatPermissions(can_send_media_messages=False),
         # The restriction will be removed in 8:00 AM (Asia/Tehran).
         # Since this will be ran every day at 24:00 (Asia/Tehran),
-        datetime.now() + timedelta(hours=8),
+        datetime.now() + timedelta(hours=7),
     )
