@@ -1,13 +1,15 @@
-from typing import Any, Generator, Generic, Iterable, Optional, TypeVar
+from typing import Any, Callable, Generator, Generic, Iterable, Optional, TypeVar
 
 import pymongo.collection
 import pymongo.mongo_client
 
 from models import ModelBase
+from models._filter_builder import _FilterBuilder
 from models.configuration import Configuration
 from models.extra_info import ExtraInfo
 from models.group_admin import GroupAdmin
 from models.user_warnings import UserWarning
+from models.game_info import GameInfo
 
 
 _T = TypeVar("_T", bound=ModelBase)
@@ -36,6 +38,15 @@ class Collection(Generic[_T]):
 
     def find_one(self, *args: Any, **kwargs: Any) -> Optional[_T]:
         return self._entity_type.deserialize(self._collection.find_one(*args, **kwargs))
+
+    def find_one_by_filter(
+        self, filter: Callable[[_FilterBuilder[_T]], Any], *args: Any, **kwargs: Any
+    ) -> Optional[_T]:
+        flt = _FilterBuilder(self._entity_type)
+        filter(flt)
+        return self._entity_type.deserialize(
+            self._collection.find_one(flt.build(), *args, **kwargs)
+        )
 
     def insert_one(self, document: _T, *args: Any, **kwargs: Any):
         return self._collection.insert_one(document.serialize(), *args, **kwargs)
@@ -74,6 +85,7 @@ class Database:
         self._user_warnings: Optional[Collection[UserWarning]] = None
         self._group_admins: Optional[Collection[GroupAdmin]] = None
         self._extra_infos: Optional[Collection[ExtraInfo]] = None
+        self._game_infos: Optional[Collection[GameInfo]] = None
 
     def get_collection(self, entity_type: type[_T]) -> Collection[_T]:
         return Collection(entity_type, self.db.get_collection(entity_type.__name__))
@@ -101,6 +113,12 @@ class Database:
         if self._extra_infos is None:
             self._extra_infos = self.get_collection(ExtraInfo)
         return self._extra_infos
+
+    @property
+    def game_infos(self) -> Collection[GameInfo]:
+        if self._game_infos is None:
+            self._game_infos = self.get_collection(GameInfo)
+        return self._game_infos
 
     def set_up(self, config: Configuration):
         col = self.configurations

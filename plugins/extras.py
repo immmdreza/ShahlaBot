@@ -166,6 +166,22 @@ async def get_extra_requested(
     extra_list = database.extra_infos
 
     extra_name = message.text.split("#")[1]
+
+    if not extra_name:
+        return
+
+    if extra_name in ["ski", "اسکی"]:
+        # only shekar
+        game_info = database.game_infos.find_one({"chat_id": message.chat.id})
+        if not game_info:
+            return
+
+        if game_info.finished:
+            return
+
+        if game_info.shekar_user_id != message.from_user.id:
+            return
+
     extra = extra_list.find_one({"extra_name": extra_name})
     if extra:
         bot: ExtBot = application.bot
