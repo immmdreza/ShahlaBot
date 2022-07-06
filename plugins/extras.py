@@ -74,8 +74,10 @@ async def set_extra_requested(
     await message.reply_text(
         f"Extra(s) `{', '.join(extra_names)}` has been saved. You can now use it with `{', '.join(f'#{x}' for x in extra_names)}`."
     )
-    await reporter.report(
-        "Extra saved", f"Extra `{', '.join(extra_names)}` has been saved."
+    await reporter.report_full_by_user(
+        "Extra saved",
+        f"Extra `{', '.join(extra_names)}` has been saved.",
+        message.from_user,
     )
 
 
@@ -125,8 +127,10 @@ async def del_extra_requested(
             extra_list.delete_one({"extra_name": extra_name})
 
     await message.reply_text(f"Extra(s) `{', '.join(extra_names)}` has been deleted.")
-    await reporter.report(
-        "Extra deleted", f"Extra `{', '.join(extra_names)}` has been deleted."
+    await reporter.report_full_by_user(
+        "Extra deleted",
+        f"Extra `{', '.join(extra_names)}` has been deleted.",
+        message.from_user,
     )
 
 
@@ -166,11 +170,25 @@ async def get_extra_requested(
     extra_list = database.extra_infos
 
     extra_name = message.text.split("#")[1]
+
+    if not extra_name:
+        return
+
+    if extra_name in ["ski", "اسکی"]:
+        # only shekar
+        game_info = database.game_infos.find_one({"chat_id": message.chat.id})
+        if not game_info:
+            return
+
+        if game_info.finished:
+            return
+
+        if game_info.shekar_user_id != message.from_user.id:
+            return
+
     extra = extra_list.find_one({"extra_name": extra_name})
     if extra:
         bot: ExtBot = application.bot
         await bot.copy_message(
             message.chat.id, config.extra_channel_id, extra.extra_message_id
         )
-    else:
-        await message.reply_text(f"Extra `{extra_name}` has not been saved.")

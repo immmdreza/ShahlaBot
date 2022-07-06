@@ -85,9 +85,11 @@ async def ban(
         await message.reply_text(
             f"User {target_user.first_name} banned by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
         )
-        await reporter.report(
+        await reporter.report_full_by_user(
             "Ban",
             f"User {target_user.first_name} banned by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}",
+            message.from_user,
+            target_user,
         )
     except BadRequest as e:
         await message.reply_text(f"Can't ban: {e.MESSAGE}")

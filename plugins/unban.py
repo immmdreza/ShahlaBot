@@ -76,4 +76,4 @@ async def on_unban_requested(
     )
     await shahla.unban_chat_member(message.chat.id, target_user.id)
     await message.reply_text(text)
-    await reporter.report("Unban", text)
+    await reporter.report_full_by_user("Unban", text, message.from_user, target_user)

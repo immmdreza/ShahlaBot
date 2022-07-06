@@ -30,4 +30,6 @@ async def on_pin_requested(
     else:
         await message.reply_text("please reply to a message")
 
-    await reporter.report("Pin", f"\n{message.from_user.first_name}) pinned a message")
+    await reporter.report_full_by_user(
+        "Pin", f"\n{message.from_user.first_name}) pinned a message", message.from_user
+    )

@@ -44,7 +44,8 @@ async def on_purge_requested(
     )
     await message.delete()
     await message.reply_text(f"Deleted {deleted} messages.")
-    await reporter.report(
+    await reporter.report_full_by_user(
         "Purge",
         f"Purged {deleted} messages. from message at date {message.reply_to_message.date.isoformat()} to {message.date.isoformat()}\nBy: {message.from_user.first_name}",
+        message.from_user,
     )
