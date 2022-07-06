@@ -1,9 +1,9 @@
 from telegram.ext import Application, ExtBot
 from pyrogram.types import Message
 from pyrogram.filters import command, reply, regex
+
 from models.extra_info import ExtraInfo
 from models.group_admin import Permissions
-
 import services.database_helpers as db_helpers
 from models.configuration import Configuration
 from services.database import Database
@@ -162,6 +162,7 @@ async def get_extra_requested(
     message: Message,
     database: Database,
     config: Configuration,
+    reporter: Reporter,
     application: Application,
 ):
     if not message.from_user:
@@ -190,5 +191,8 @@ async def get_extra_requested(
     if extra:
         bot: ExtBot = application.bot
         await bot.copy_message(
-            message.chat.id, config.extra_channel_id, extra.extra_message_id
+            message.chat.id,
+            config.extra_channel_id,
+            extra.extra_message_id,
+            reply_to_message_id=message.id,
         )
