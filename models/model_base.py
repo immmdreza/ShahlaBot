@@ -3,6 +3,8 @@ from typing import Any, TypeVar
 
 from bson.objectid import ObjectId
 
+from ._filter_builder import _FilterBuilder
+
 
 _T = TypeVar("_T", bound="ModelBase")
 
@@ -29,3 +31,7 @@ class ModelBase:
         if self._id is None:
             raise ValueError(f"{self} has no id")
         return self._id
+
+    @classmethod
+    def get_filter_builder(cls: type[_T]):
+        return _FilterBuilder(cls)

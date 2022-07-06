@@ -88,10 +88,12 @@ async def on_warn_requested(
             warns_count=1,
         )
         await message.reply_text(text)
-        await reporter.report("Warning", text)
+        await reporter.report_full_by_user(
+            "Warning", text, message.from_user, target_user
+        )
     else:
         warning.warns_count += 1
-        if warning.warns_count + 1 >= config.maximum_warnings:
+        if warning.warns_count + 1 > config.maximum_warnings:
             if Permissions.CanBan in admin.permissions:
                 await message.chat.restrict_member(
                     target_user.id,
@@ -105,11 +107,13 @@ async def on_warn_requested(
                         target_fn=target_user.first_name
                     )
                 )
-                await reporter.report(
+                await reporter.report_full_by_user(
                     "Ban",
                     "User {target_fn} has been banned for 1 day (maximum warns).".format(
                         target_fn=target_user.first_name
                     ),
+                    message.from_user,
+                    target_user,
                 )
                 return
             else:
@@ -125,4 +129,6 @@ async def on_warn_requested(
             warns_count=warning.warns_count,
         )
         await message.reply_text(text)
-        await reporter.report("Warning", text)
+        await reporter.report_full_by_user(
+            "Warning", text, message.from_user, target_user
+        )

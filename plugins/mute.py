@@ -90,9 +90,11 @@ async def mute(
         await message.reply_text(
             f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}"
         )
-        await reporter.report(
+        await reporter.report_full_by_user(
             "Mute",
             f"User {target_user.first_name} muted by {message.from_user.first_name}\nreason: {reason}\nduration: {duration_str}",
+            message.from_user,
+            target_user,
         )
     except BadRequest as e:
         await message.reply_text(f"Can't mute: {e.MESSAGE}")

@@ -89,4 +89,4 @@ async def on_unmute_requested(
         ),
     )
     await message.reply_text(text)
-    await reporter.report("Unmuted", text)
+    await reporter.report_full_by_user("Unmuted", text, message.from_user, target_user)

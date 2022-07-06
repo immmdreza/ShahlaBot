@@ -12,11 +12,8 @@ from shahla import Shahla, async_injector_from_ctx
 from services.reporter import Reporter
 
 
-CHAT_MEMBER_MESSAGE_FMT = """
-From: __{old_status}__
+CHAT_MEMBER_MESSAGE_FMT = """From: __{old_status}__
 To: __{new_status}__
-Effected user: **{ed_name}** [`{ed_id}`]
-Effective user: **{ev_name}** [`{ev_id}`]
 """
 
 
@@ -34,21 +31,21 @@ async def _chat_member_updated(
 
     if cmu.new_chat_member.user is None:
         effected_name = "Unknown"
-        effected_id = "---"
+        effected_id = None
     else:
         effected_name = cast(str, cmu.new_chat_member.user.first_name)
-        effected_id = str(cmu.new_chat_member.user.id)
+        effected_id = cmu.new_chat_member.user.id
 
-    await reporter.report(
+    await reporter.report_full(
         "Chat Member Updated",
         CHAT_MEMBER_MESSAGE_FMT.format(
             old_status=cmu.old_chat_member.status,
             new_status=cmu.new_chat_member.status,
-            ed_name=effected_name,
-            ed_id=effected_id,
-            ev_name=cmu.from_user.first_name,
-            ev_id=cmu.from_user.id,
         ),
+        executer_name=cmu.from_user.first_name,
+        executer_id=cmu.from_user.id,
+        effected_name=effected_name,
+        effected_id=effected_id,
     )
 
 
