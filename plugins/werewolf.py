@@ -69,6 +69,7 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
 
                 game.players_count = int(all_players)
                 game.alive_players = int(alive_players)
+                game.finished = False
                 games.update_model(game)
 
                 await message.reply_text("/stsup", quote=True)

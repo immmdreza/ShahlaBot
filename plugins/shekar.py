@@ -37,14 +37,10 @@ async def shekar(
     games = database.game_infos
 
     game = games.find_one({"chat_id": message.chat.id})
-    if game is None:
+    if game is None or game.finished:
         game = GameInfo(message.chat.id, 0, 0, False, target_user.id)
         database.game_infos.insert_one(game)
     else:
-        if game.finished:
-            await message.reply_text("❌ این بازی به پایان رسیده است.")
-            return
-
         game.shekar_user_id = target_user.id
         games.update_model(game)
 
