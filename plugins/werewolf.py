@@ -56,6 +56,7 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                 if game is None:
                     return
 
+                game.players_count = int(all_players)
                 game.alive_players = int(alive_players)
                 game.finished = True
                 games.update_model(game)
@@ -66,6 +67,7 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                 if game is None:
                     return
 
+                game.players_count = int(all_players)
                 game.alive_players = int(alive_players)
                 games.update_model(game)
 
