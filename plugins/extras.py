@@ -187,6 +187,8 @@ async def get_extra_requested(
         if game_info.shekar_user_id != message.from_user.id:
             return
 
+    replied = bool(message.reply_to_message_id)
+
     extra = extra_list.find_one({"extra_name": extra_name})
     if extra:
         bot: ExtBot = application.bot
@@ -194,5 +196,35 @@ async def get_extra_requested(
             message.chat.id,
             config.extra_channel_id,
             extra.extra_message_id,
-            reply_to_message_id=message.id,
+            reply_to_message_id=message.id
+            if not replied
+            else message.reply_to_message_id,
         )
+
+        if extra_name in ["شکار", "شکارم", "ch", "شکارچی"]:
+            if replied:
+                # It can be pointed to someone else, then ignore it
+                return
+
+            game_info = database.game_infos.find_one({"chat_id": message.chat.id})
+            if not game_info:
+                return
+
+            if game_info.finished:
+                return
+
+            if not game_info.shekar_user_id:
+                # If shekar is not set, then set it
+                game_info.shekar_user_id = message.from_user.id
+                database.game_infos.update_model(game_info)
+
+                await message.reply_text(
+                    f"🎉 کاربر {message.from_user.first_name} به عنوان شکار در این بازی انتخاب شد."
+                )
+                await reporter.report_full_by_user(
+                    "Shekar Set",
+                    f"\n{message.from_user.first_name} به عنوان شکار در این بازی انتخاب شد.",
+                    message.from_user,
+                    message.from_user,
+                )
+                await message.pin()

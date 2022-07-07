@@ -2,6 +2,7 @@ import asyncio
 
 from pyrogram.filters import command, group
 from pyrogram.types import Message
+from models.game_info import GameInfo
 
 import services.database_helpers as db_helpers
 from models.group_admin import Permissions
@@ -37,15 +38,15 @@ async def shekar(
 
     game = games.find_one({"chat_id": message.chat.id})
     if game is None:
-        await message.reply_text("❌ این گروه در حال حاضر بازی ای در جریان نیست.")
-        return
+        game = GameInfo(message.chat.id, 0, 0, False, target_user.id)
+        database.game_infos.insert_one(game)
+    else:
+        if game.finished:
+            await message.reply_text("❌ این بازی به پایان رسیده است.")
+            return
 
-    if game.finished:
-        await message.reply_text("❌ این بازی به پایان رسیده است.")
-        return
-
-    game.shekar_user_id = target_user.id
-    games.update_model(game)
+        game.shekar_user_id = target_user.id
+        games.update_model(game)
 
     await message.reply_text(
         f"🎉 کاربر {target_user.first_name} به عنوان شکار در این بازی انتخاب شد."

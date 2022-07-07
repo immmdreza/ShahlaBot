@@ -12,7 +12,7 @@ async def notify_before_lock(shahla: Shahla, configuration: Configuration):
         return
 
     a = await shahla.send_message(
-        group_id, "یادتون نره گروه راس ساعت 24، بسته میشه! سریع جمش کنید."
+        group_id, "یادتون نره گروه راس نیم ساعت دیگه بسته میشه! سریع جمش کنید."
     )
     await a.pin()
 
