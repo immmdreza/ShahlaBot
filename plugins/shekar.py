@@ -38,7 +38,14 @@ async def shekar(
 
     game = games.find_one({"chat_id": message.chat.id})
     if game is None or game.finished:
-        game = GameInfo(message.chat.id, 0, 0, False, target_user.id)
+        database.game_infos.delete_many({"chat_id": message.chat.id})
+        game = GameInfo(
+            chat_id=message.chat.id,
+            players_count=0,
+            alive_players=0,
+            finished=False,
+            shekar_user_id=target_user.id,
+        )
         database.game_infos.insert_one(game)
     else:
         game.shekar_user_id = target_user.id
