@@ -54,6 +54,7 @@ application = ApplicationBuilder().token(bot_token).build()
 
 
 async def main():
+    
     if mongo_username and mongo_password and mongo_host:
         host_addr = "mongodb://%s:%s@%s" % (
             quote_plus(mongo_username),
@@ -85,8 +86,6 @@ async def main():
 
     await shahla.start()
 
-    # ss = await shahla.export_session_string()
-    # print(ss)
 
     user_bot = await shahla.get_me()
     print(f"User bot is {user_bot.first_name}", user_bot.id)
