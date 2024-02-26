@@ -6,7 +6,7 @@ def get_group_admin_with_permission(
     database: Database, user_id: int, permission: Permissions
 ):
     group_admins = database.group_admins
-    admin = group_admins.find_one(dict(user_chat_id=user_id))
+    admin = group_admins.find_one({"user_chat_id": user_id})
     if admin is None:
         return None
 

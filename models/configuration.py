@@ -1,4 +1,6 @@
-from .model_base import ModelBase, dataclass, field
+from dataclasses import dataclass, field
+
+from .model_base import ModelBase
 
 
 @dataclass()

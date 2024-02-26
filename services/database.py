@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generator, Generic, Iterable, Optional, TypeVar
+from typing import Any, Callable, Generator, Iterable, Optional
 
 import pymongo.collection
 import pymongo.mongo_client
@@ -7,18 +7,13 @@ from models import ModelBase
 from models._filter_builder import _FilterBuilder
 from models.configuration import Configuration
 from models.extra_info import ExtraInfo
+from models.game_info import GameInfo
 from models.group_admin import GroupAdmin
 from models.user_warnings import UserWarning
-from models.game_info import GameInfo
 
 
-_T = TypeVar("_T", bound=ModelBase)
-
-
-class Collection(Generic[_T]):
-    def __init__(
-        self, entity_type: type[_T], collection: pymongo.collection.Collection
-    ):
+class Collection[T: ModelBase]:
+    def __init__(self, entity_type: type[T], collection: pymongo.collection.Collection):
         self._entity_type = entity_type
         self._collection = collection
 
@@ -26,7 +21,7 @@ class Collection(Generic[_T]):
     def collection(self) -> pymongo.collection.Collection:
         return self._collection
 
-    def find(self, *args: Any, **kwargs: Any) -> Generator[_T, None, None]:
+    def find(self, *args: Any, **kwargs: Any) -> Generator[T, None, None]:
         return (
             x
             for x in (
@@ -36,27 +31,27 @@ class Collection(Generic[_T]):
             if x is not None
         )
 
-    def find_one(self, *args: Any, **kwargs: Any) -> Optional[_T]:
+    def find_one(self, *args: Any, **kwargs: Any) -> Optional[T]:
         return self._entity_type.deserialize(self._collection.find_one(*args, **kwargs))
 
     def find_one_by_filter(
-        self, filter: Callable[[_FilterBuilder[_T]], Any], *args: Any, **kwargs: Any
-    ) -> Optional[_T]:
+        self, filter: Callable[[_FilterBuilder[T]], Any], *args: Any, **kwargs: Any
+    ) -> Optional[T]:
         flt = _FilterBuilder(self._entity_type)
         filter(flt)
         return self._entity_type.deserialize(
             self._collection.find_one(flt.build(), *args, **kwargs)
         )
 
-    def insert_one(self, document: _T, *args: Any, **kwargs: Any):
+    def insert_one(self, document: T, *args: Any, **kwargs: Any):
         return self._collection.insert_one(document.serialize(), *args, **kwargs)
 
-    def insert_many(self, documents: Iterable[_T], *args: Any, **kwargs: Any):
+    def insert_many(self, documents: Iterable[T], *args: Any, **kwargs: Any):
         return self._collection.insert_many(
             (document.serialize() for document in documents), *args, **kwargs
         )
 
-    def update_model(self, update: _T, *args: Any, **kwargs: Any):
+    def update_model(self, update: T, *args: Any, **kwargs: Any):
         flt = {"_id": update.id}
         return self.update_one(flt, {"$set": update.serialize()}, *args, **kwargs)
 
@@ -87,7 +82,7 @@ class Database:
         self._extra_infos: Optional[Collection[ExtraInfo]] = None
         self._game_infos: Optional[Collection[GameInfo]] = None
 
-    def get_collection(self, entity_type: type[_T]) -> Collection[_T]:
+    def get_collection[T: ModelBase](self, entity_type: type[T]) -> Collection[T]:
         return Collection(entity_type, self.db.get_collection(entity_type.__name__))
 
     @property

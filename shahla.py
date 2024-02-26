@@ -2,16 +2,12 @@ import functools
 import inspect
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Generic, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, Self, cast
 
 from pyrogram.client import Client
 from pyrogram.errors import BadRequest
 from pyrogram.types import Message, User
 from telegram.ext import CallbackContext
-
-
-_T = TypeVar("_T")
-_K = TypeVar("_K")
 
 
 class LifeTime(Enum):
@@ -21,19 +17,19 @@ class LifeTime(Enum):
 
 
 @dataclass()
-class DependencyModel(Generic[_T]):
-    dependency_type: type[_T]
-    dependency_factory: Callable[..., _T]
+class DependencyModel[T]:
+    dependency_type: type[T]
+    dependency_factory: Callable[..., T]
     dependency_lifetime: LifeTime
-    dependency_instance: Optional[_T] = None
+    dependency_instance: Optional[T] = None
 
 
-class Scope(Generic[_T]):
-    def __init__(self, name: str, shahla: "Shahla", model: DependencyModel[_T]):
+class Scope[T]:
+    def __init__(self, name: str, shahla: "Shahla", model: DependencyModel[T]):
         self._name = name
         self._shahla = shahla
         self._model = model
-        self._dependency: Optional[_T] = None
+        self._dependency: Optional[T] = None
 
     def __enter__(self):
         if self._model.dependency_lifetime == LifeTime.Singleton:
@@ -68,11 +64,11 @@ class MultipleScope:
             scope.__exit__(exc_type, exc_val, exc_tb)
 
 
-class Shahla(Client):
+class Shahla[T](Client):
     def register_type(
         self,
-        the_type: type[_T],
-        instance_builder: Callable[["Shahla"], _T],
+        the_type: type[T],
+        instance_builder: Callable[[Self], T],
         lifetime: LifeTime = LifeTime.Singleton,
     ):
         if not hasattr(self, "_registered_types"):
@@ -89,7 +85,7 @@ class Shahla(Client):
             model = DependencyModel(the_type, instance_builder, lifetime)
             self._registered_types[the_type] = model
 
-    def request_instance(self, the_type: type[_T]) -> _T:
+    def request_instance(self, the_type: type[T]) -> T:
         if not hasattr(self, "_registered_types"):
             raise ValueError("No registered types.")
 
@@ -106,7 +102,7 @@ class Shahla(Client):
         except KeyError:
             raise ValueError(f"Type {the_type} not registered.")
 
-    def create_scope_for(self, the_type: type[_T], scope_name: str) -> Scope[_T]:
+    def create_scope_for(self, the_type: type[T], scope_name: str) -> Scope[T]:
         if not hasattr(self, "_registered_types"):
             raise ValueError("No registered types.")
 
@@ -222,16 +218,16 @@ def injector(func: Callable[..., Any]):
     return wrapped
 
 
-def async_injector_grabber(
-    grab_from_type: type[_K], grabber: Callable[[_K], Shahla]
-) -> Callable[..., Any]:
+def async_injector_grabber[
+    K
+](grab_from_type: type[K], grabber: Callable[[K], Shahla]) -> Callable[..., Any]:
     def async_injector(func: Callable[..., Any]):
         @functools.wraps(func)
         async def wrapped(*args, **kwargs):
             signature = inspect.signature(func)
             args_count = len(args)
 
-            grab_from: _K | None = None
+            grab_from: K | None = None
             try:
                 grab_from = next(x for x in args if isinstance(x, grab_from_type))
             except StopIteration:

@@ -1,11 +1,11 @@
-from telegram.ext import Application, ExtBot
+from pyrogram.filters import command, regex, reply
 from pyrogram.types import Message
-from pyrogram.filters import command, reply, regex
+from telegram.ext import Application, ExtBot
 
-from models.extra_info import ExtraInfo
-from models.group_admin import Permissions
 import services.database_helpers as db_helpers
 from models.configuration import Configuration
+from models.extra_info import ExtraInfo
+from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
 from shahla import Shahla, async_injector
@@ -196,9 +196,9 @@ async def get_extra_requested(
             message.chat.id,
             config.extra_channel_id,
             extra.extra_message_id,
-            reply_to_message_id=message.id
-            if not replied
-            else message.reply_to_message_id,
+            reply_to_message_id=(
+                message.id if not replied else message.reply_to_message_id
+            ),
         )
 
         if extra_name in ["شکار", "شکارم", "ch", "شکارچی"]:

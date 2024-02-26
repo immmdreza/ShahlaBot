@@ -1,7 +1,6 @@
 from dataclasses import Field
 from typing import Any, Callable, Generic, Optional, TypeVar
 
-
 _T = TypeVar("_T")
 _TAny = TypeVar("_TAny", bound=Any)
 

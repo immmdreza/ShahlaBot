@@ -1,12 +1,11 @@
 import re
 
+from pyrogram.filters import group, text, user
 from pyrogram.types import Message
-from pyrogram.filters import user, text, group
 
-from services.database import Database
 from models.game_info import GameInfo
+from services.database import Database
 from shahla import Shahla, async_injector
-
 
 PLAYERS_MESSAGE_PATTERN = re.compile(
     r"^(.*): (?P<alive_players>\d{1,2}) ?/ ?(?P<all_players>\d{1,2})\n"

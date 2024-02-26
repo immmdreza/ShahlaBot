@@ -1,15 +1,15 @@
 from datetime import datetime, timedelta
-from pyrogram.types import Message, ChatPermissions
+
 from pyrogram.filters import command, group
+from pyrogram.types import ChatPermissions, Message
 
-from models.group_admin import Permissions
 import services.database_helpers as db_helpers
-from shahla import Shahla, async_injector
-from services.reporter import Reporter
-from services.database import Database
-from models.user_warnings import UserWarning
 from models.configuration import Configuration
-
+from models.group_admin import Permissions
+from models.user_warnings import UserWarning
+from services.database import Database
+from services.reporter import Reporter
+from shahla import Shahla, async_injector
 
 WARN_MESSAGE_FMT = (
     "User {target_fn} has been warned "
@@ -68,7 +68,7 @@ async def on_warn_requested(
         return
 
     # check if target is not an admin
-    if admins.exists(dict(user_chat_id=target_user.id)):
+    if admins.exists({"user_chat_id": target_user.id}):
         await message.reply_text("You can't warn an admin.")
         return
 
@@ -76,7 +76,7 @@ async def on_warn_requested(
     reason = " ".join(others)
 
     # increase warning count
-    warning = warnings.find_one(dict(user_chat_id=target_user.id))
+    warning = warnings.find_one({"user_chat_id": target_user.id})
     if warning is None:
         warning = UserWarning(user_chat_id=target_user.id, warns_count=1)
         warnings.insert_one(warning)

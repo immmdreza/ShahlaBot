@@ -7,25 +7,26 @@
 import asyncio
 from urllib.parse import quote_plus
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+# from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, Application
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
+from telegram.ext import Application, ApplicationBuilder
 
 import helpers
-import services.group_lock as lock_service
-from shahla import Shahla, LifeTime
-from services.reporter import Reporter
-from services.database import Database
-from models.configuration import Configuration
-from plugins.bot_handlers.reporters import chat_member_updated_handler
-from plugins.bot_handlers.permission_editor import (
-    open_permission_editor_handler,
-    edit_permissions_handler,
-    close_editor_handler,
-)
 
+# import services.group_lock as lock_service
+from models.configuration import Configuration
+from plugins.bot_handlers.permission_editor import (
+    close_editor_handler,
+    edit_permissions_handler,
+    open_permission_editor_handler,
+)
+from plugins.bot_handlers.reporters import chat_member_updated_handler
+from services.database import Database
+from services.reporter import Reporter
+from shahla import LifeTime, Shahla
 
 load_dotenv()
 api_id = helpers.get_from_env("API_ID", int)
@@ -43,7 +44,7 @@ mongo_host = helpers.get_from_env("MONGO_HOST")
 session_string = helpers.get_from_env("SESSION_STRING")
 
 shahla = Shahla(
-    ":memory:",
+    "shahla",
     api_id,
     api_hash,
     session_string=session_string,
@@ -103,18 +104,21 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     aps = AsyncIOScheduler()
 
-    aps.add_job(
-        lock_service.notify_before_lock,
-        # Every day at 00:30 (Asia/Tehran), the group will be notified (30 min) before lock.
-        CronTrigger(hour=0, minute=30, timezone="Asia/Tehran"),
-        kwargs={"shahla": shahla},
-    )
-    aps.add_job(
-        lock_service.group_locker,
-        # Every day at 01:00 AM (Asia/Tehran), the group will be locked
-        CronTrigger(hour=1, timezone="Asia/Tehran"),
-        kwargs={"shahla": shahla},
-    ),
+    # No lock needed!
+    # aps.add_job(
+    #     lock_service.notify_before_lock,
+    #     # Every day at 00:30 (Asia/Tehran), the group will be notified (30 min) before lock.
+    #     CronTrigger(hour=0, minute=30, timezone="Asia/Tehran"),
+    #     kwargs={"shahla": shahla},
+    # )
+    # _ = (
+    #     aps.add_job(
+    #         lock_service.group_locker,
+    #         # Every day at 01:00 AM (Asia/Tehran), the group will be locked
+    #         CronTrigger(hour=1, timezone="Asia/Tehran"),
+    #         kwargs={"shahla": shahla},
+    #     ),
+    # )
 
     aps.start()
     loop.run_until_complete(main())

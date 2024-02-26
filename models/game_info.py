@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from typing import Optional
-from .model_base import ModelBase, dataclass
+
+from .model_base import ModelBase
 
 
 @dataclass

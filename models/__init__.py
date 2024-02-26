@@ -1,4 +1,3 @@
-from .model_base import deserialize, ModelBase
-
+from .model_base import ModelBase, deserialize
 
 __all__ = ["deserialize", "ModelBase"]

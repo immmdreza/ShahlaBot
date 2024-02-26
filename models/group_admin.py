@@ -1,4 +1,5 @@
 from enum import IntFlag
+
 from .model_base import ModelBase, dataclass, field
 
 

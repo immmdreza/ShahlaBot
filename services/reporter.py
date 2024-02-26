@@ -4,7 +4,6 @@ from typing import Optional
 from pyrogram.client import Client
 from pyrogram.types import User
 
-
 REPORT_FMT = "**[{category}]**:\n{message}\n\n__{datetime}__"
 REPORT_FULL_FMT = (
     "**[{category}]**:\n"

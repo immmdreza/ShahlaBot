@@ -1,5 +1,5 @@
-from pyrogram.types import Message
 from pyrogram.filters import command
+from pyrogram.types import Message
 
 from models.configuration import Configuration
 from shahla import Shahla, async_injector
