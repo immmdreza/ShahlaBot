@@ -47,7 +47,7 @@ shahla = Shahla(
     "shahla",
     api_id,
     api_hash,
-    session_string=session_string,
+    # session_string=session_string,
     plugins={"root": "plugins", "exclude": ["bot_handlers"]},
 )
 

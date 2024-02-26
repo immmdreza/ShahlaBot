@@ -2,4 +2,4 @@ pymongo
 Pyrogram
 python-dotenv
 python-telegram-bot[ext]
-TgCrypto
+
