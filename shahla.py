@@ -6,6 +6,8 @@ from typing import Any, Callable, Optional, Self, cast
 
 from pyrogram.client import Client
 from pyrogram.errors import BadRequest
+from pyrogram.filters import Filter, command
+from pyrogram.handlers.message_handler import MessageHandler
 from pyrogram.types import Message, User
 from telegram.ext import CallbackContext
 
@@ -34,8 +36,8 @@ class Scope[T]:
     def __enter__(self):
         if self._model.dependency_lifetime == LifeTime.Singleton:
             if self._model.dependency_instance is None:
-                self._model.dependency_instance = self._model.dependency_factory(
-                    self._shahla
+                self._model.dependency_instance = (
+                    self._model.dependency_factory(self._shahla)
                 )
             return self._name, self._model.dependency_instance
         elif self._model.dependency_lifetime == LifeTime.Transient:
@@ -64,7 +66,21 @@ class MultipleScope:
             scope.__exit__(exc_type, exc_val, exc_tb)
 
 
+@dataclass
+class CommandInfo:
+    commands: str | list[str]
+    prefixes: str | list[str] = "/"
+    description: Optional[str] = None
+    notes: tuple[str, ...] = ()
+
+    def __str__(self) -> str:
+        return f"`({", ".join(self.prefixes)}) {" or ".join(self.commands)}`\n_{self.description or "No description"}_\n- {"- ".join(self.notes)}"
+
+
 class Shahla[T](Client):
+
+    commands: list[CommandInfo] = []
+
     def register_type(
         self,
         the_type: type[T],
@@ -109,7 +125,9 @@ class Shahla[T](Client):
         model = self._registered_types[the_type]
         return Scope(scope_name, self, model)
 
-    async def resolve_target_user_from_command(self, message: Message) -> User | None:
+    async def resolve_target_user_from_command(
+        self, message: Message
+    ) -> User | None:
         if message.command:
             if len(message.command) > 1:
                 try:
@@ -129,10 +147,15 @@ class Shahla[T](Client):
     ) -> tuple[User | None, list[str]]:
         if message.command:
             if len(message.command) > 2:
-                if message.command[1].startswith("@") or message.command[1].isnumeric():
+                if (
+                    message.command[1].startswith("@")
+                    or message.command[1].isnumeric()
+                ):
                     try:
                         return (
-                            cast(User, await self.get_users(message.command[1])),
+                            cast(
+                                User, await self.get_users(message.command[1])
+                            ),
                             message.command[2:],
                         )
                     except BadRequest:
@@ -154,6 +177,42 @@ class Shahla[T](Client):
             message.command[1:],
         )
 
+    @classmethod
+    def on_command(
+        cls, filters: Optional[Filter] = None, group: int = 0
+    ) -> Callable:
+        """Decorator for handling new messages.
+
+        This does the same thing as :meth:`~pyrogram.Client.add_handler` using the
+        :obj:`~pyrogram.handlers.MessageHandler`.
+
+        Parameters:
+            filters (:obj:`~pyrogram.filters`, *optional*):
+                Pass one or more filters to allow only a subset of messages to be passed
+                in your function.
+
+            group (``int``, *optional*):
+                The group identifier, defaults to 0.
+        """
+
+        def decorator(func: Callable) -> Callable:
+            if isinstance(cls, Client):
+                cls.add_handler(MessageHandler(func, filters), group)  # type: ignore
+            elif isinstance(cls, Filter) or cls is None:
+                if not hasattr(func, "handlers"):
+                    func.handlers = []
+
+                func.handlers.append(
+                    (
+                        MessageHandler(func, cls),
+                        group if filters is None else filters,
+                    )
+                )
+
+            return func
+
+        return decorator
+
 
 def async_injector(func: Callable[..., Any]):
     @functools.wraps(func)
@@ -166,7 +225,9 @@ def async_injector(func: Callable[..., Any]):
             shahla = next(x for x in args if isinstance(x, Shahla))
         except StopIteration:
             try:
-                shahla = next(x for x in kwargs.values() if isinstance(x, Shahla))
+                shahla = next(
+                    x for x in kwargs.values() if isinstance(x, Shahla)
+                )
             except StopIteration:
                 raise ValueError("No shahla instance found.")
 
@@ -197,7 +258,9 @@ def injector(func: Callable[..., Any]):
             shahla = next(x for x in args if isinstance(x, Shahla))
         except StopIteration:
             try:
-                shahla = next(x for x in kwargs.values() if isinstance(x, Shahla))
+                shahla = next(
+                    x for x in kwargs.values() if isinstance(x, Shahla)
+                )
             except StopIteration:
                 raise ValueError("No shahla instance found.")
 
@@ -220,20 +283,26 @@ def injector(func: Callable[..., Any]):
 
 def async_injector_grabber[
     K
-](grab_from_type: type[K], grabber: Callable[[K], Shahla]) -> Callable[..., Any]:
+](grab_from_type: type[K], grabber: Callable[[K], Shahla]) -> Callable[
+    ..., Any
+]:
     def async_injector(func: Callable[..., Any]):
         @functools.wraps(func)
         async def wrapped(*args, **kwargs):
             signature = inspect.signature(func)
             args_count = len(args)
 
-            grab_from: K | None = None
+            grab_from = None
             try:
-                grab_from = next(x for x in args if isinstance(x, grab_from_type))
+                grab_from = next(
+                    x for x in args if isinstance(x, grab_from_type)
+                )
             except StopIteration:
                 try:
                     grab_from = next(
-                        x for x in kwargs.values() if isinstance(x, grab_from_type)
+                        x
+                        for x in kwargs.values()
+                        if isinstance(x, grab_from_type)
                     )
                 except StopIteration:
                     raise ValueError("No shahla instance found.")
@@ -303,3 +372,32 @@ def async_injector_from_ctx(func: Callable[..., Any]) -> Callable[..., Any]:
             return await func(*args, **kwargs, **dict(scopes))
 
     return wrapped
+
+
+def shahla_command(
+    commands: str | list[str],
+    prefixes: str | list[str] = "/",
+    description: Optional[str] = None,
+    notes: tuple[str, ...] = (),
+):
+    """Filter commands, i.e.: text messages starting with "/" or any other custom prefix.
+
+    Parameters:
+        commands (``str`` | ``list``):
+            The command or list of commands as string the filter should look for.
+            Examples: "start", ["start", "help", "settings"]. When a message text containing
+            a command arrives, the command itself and its arguments will be stored in the *command*
+            field of the :obj:`~pyrogram.types.Message`.
+
+        prefixes (``str`` | ``list``, *optional*):
+            A prefix or a list of prefixes as string the filter should look for.
+            Defaults to "/" (slash). Examples: ".", "!", ["/", "!", "."], list(".:!").
+            Pass None or "" (empty string) to allow commands with no prefix at all.
+
+        case_sensitive (``bool``, *optional*):
+            Pass True if you want your command(s) to be case sensitive. Defaults to False.
+            Examples: when True, command="Start" would trigger /Start but not /start.
+    """
+    info = CommandInfo(commands, prefixes, description, notes)
+    Shahla.commands.append(info)
+    return command(commands=commands, prefixes=prefixes)
