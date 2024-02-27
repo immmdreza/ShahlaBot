@@ -2,7 +2,7 @@ import functools
 import inspect
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional, Self, cast
+from typing import Any, Callable, Generic, Optional, Self, TypeVar, cast
 
 from pyrogram.client import Client
 from pyrogram.errors import BadRequest
@@ -10,6 +10,8 @@ from pyrogram.filters import Filter, command
 from pyrogram.handlers.message_handler import MessageHandler
 from pyrogram.types import Message, User
 from telegram.ext import CallbackContext
+
+T = TypeVar("T")
 
 
 class LifeTime(Enum):
@@ -19,14 +21,14 @@ class LifeTime(Enum):
 
 
 @dataclass()
-class DependencyModel[T]:
+class DependencyModel(Generic[T]):
     dependency_type: type[T]
     dependency_factory: Callable[..., T]
     dependency_lifetime: LifeTime
     dependency_instance: Optional[T] = None
 
 
-class Scope[T]:
+class Scope(Generic[T]):
     def __init__(self, name: str, shahla: "Shahla", model: DependencyModel[T]):
         self._name = name
         self._shahla = shahla
@@ -74,10 +76,10 @@ class CommandInfo:
     notes: tuple[str, ...] = ()
 
     def __str__(self) -> str:
-        return f"`({", ".join(self.prefixes)}) {" or ".join(self.commands)}`\n_{self.description or "No description"}_\n- {"- ".join(self.notes)}"
+        return f'`({", ".join(self.prefixes)}) {" or ".join(self.commands)}`\n_{self.description or "No description"}_\n- {"- ".join(self.notes)}'
 
 
-class Shahla[T](Client):
+class Shahla(Generic[T], Client):
 
     commands: list[CommandInfo] = []
 
@@ -281,11 +283,12 @@ def injector(func: Callable[..., Any]):
     return wrapped
 
 
-def async_injector_grabber[
-    K
-](grab_from_type: type[K], grabber: Callable[[K], Shahla]) -> Callable[
-    ..., Any
-]:
+K = TypeVar("K")
+
+
+def async_injector_grabber(
+    grab_from_type: type[K], grabber: Callable[[K], Shahla]
+) -> Callable[..., Any]:
     def async_injector(func: Callable[..., Any]):
         @functools.wraps(func)
         async def wrapped(*args, **kwargs):

@@ -8,7 +8,7 @@ from shahla import Shahla, async_injector, shahla_command
 
 @Shahla.on_message(shahla_command("commands", description="Shows this message.", notes=("Admins only")))  # type: ignore
 @async_injector
-async def on_repoff_requested(
+async def on_commands_requested(
     _: Shahla,
     message: Message,
     database: Database,
