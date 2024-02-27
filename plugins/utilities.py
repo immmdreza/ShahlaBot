@@ -4,7 +4,7 @@ from pyrogram.types import Message
 from shahla import Shahla, shahla_command
 
 
-@Shahla.on_message(shahla_command("id", description="Identify a user.", notes=(,)))  # type: ignore
+@Shahla.on_message(shahla_command("id", description="Identify a user."))  # type: ignore
 async def on_id_requested(client: Shahla, message: Message):
 
     if message.from_user is None:

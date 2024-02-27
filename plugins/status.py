@@ -12,7 +12,7 @@ from services.database import Database
 from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(shahla_command("status", description="Shows user status", notes=(,)) & group)  # type: ignore
+@Shahla.on_message(shahla_command("status", description="Shows user status") & group)  # type: ignore
 @async_injector
 async def on_status_requested(
     shahla: Shahla,
