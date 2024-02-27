@@ -27,14 +27,10 @@ async def on_admin_requested(
         return
 
     if not message.reply_to_message:
-        await message.reply_text(
-            "این دستور رو باید روی یک پبام دیگه ریپلای کنی."
-        )
+        await message.reply_text("این دستور رو باید روی یک پبام دیگه ریپلای کنی.")
         return
 
-    user = database.user_warnings.find_one(
-        {"user_chat_id": message.from_user.id}
-    )
+    user = database.user_warnings.find_one({"user_chat_id": message.from_user.id})
     if user and not user.can_report:
         return
 

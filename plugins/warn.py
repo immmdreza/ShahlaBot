@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from pyrogram.filters import command, group
+from pyrogram.filters import group
 from pyrogram.types import ChatPermissions, Message
 
 import services.database_helpers as db_helpers
@@ -34,8 +34,8 @@ async def on_warn_requested(
     if not message.from_user:
         return
 
-    target_user, others = (
-        await shahla.resolve_target_user_and_others_from_command(message)
+    target_user, others = await shahla.resolve_target_user_and_others_from_command(
+        message
     )
     if not target_user:
         await message.reply_text(
@@ -117,9 +117,7 @@ async def on_warn_requested(
                 )
                 return
             else:
-                await message.reply_text(
-                    "You can't warn a user with maximum warns."
-                )
+                await message.reply_text("You can't warn a user with maximum warns.")
                 return
 
         warnings.update_model(warning)

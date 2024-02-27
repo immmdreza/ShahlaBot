@@ -7,3 +7,4 @@ from .model_base import ModelBase
 class ExtraInfo(ModelBase):
     extra_name: str
     extra_message_id: int
+    is_quote: bool = False

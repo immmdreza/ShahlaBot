@@ -1,3 +1,4 @@
+import pyrogram
 from pyrogram.filters import command, regex, reply
 from pyrogram.types import Message
 from telegram.ext import Application, ExtBot
@@ -11,7 +12,7 @@ from services.reporter import Reporter
 from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(shahla_command("setextra", description="Sets an extra", notes=("Admins only", "Put extra without the #.")) & reply)  # type: ignore
+@Shahla.on_message(shahla_command(["setextra", "setqextra"], description="Sets an extra", notes=("Admins only", "Put extra without the #.", "Use /setqextra to set a quote extra.")) & reply)  # type: ignore
 @async_injector
 async def set_extra_requested(
     _: Shahla,
@@ -45,6 +46,8 @@ async def set_extra_requested(
 
     extra_list = database.extra_infos
 
+    is_quote = message.command[0] == "setqextra"
+
     extra_names = message.command[1:]
     bot: ExtBot = application.bot
 
@@ -63,16 +66,22 @@ async def set_extra_requested(
             except:
                 pass
 
+            extra.is_quote = is_quote
             extra.extra_message_id = fwded_message.message_id
             extra_list.update_model(extra)
         else:
             extra = ExtraInfo(
-                extra_name=extra_name, extra_message_id=fwded_message.message_id
+                extra_name=extra_name,
+                extra_message_id=fwded_message.message_id,
+                is_quote=is_quote,
             )
             extra_list.insert_one(extra)
 
     await message.reply_text(
         f"Extra(s) `{', '.join(extra_names)}` has been saved. You can now use it with `{', '.join(f'#{x}' for x in extra_names)}`."
+        + " (Quote)"
+        if is_quote
+        else ""
     )
     await reporter.report_full_by_user(
         "Extra saved",
@@ -126,9 +135,7 @@ async def del_extra_requested(
                 pass
             extra_list.delete_one({"extra_name": extra_name})
 
-    await message.reply_text(
-        f"Extra(s) `{', '.join(extra_names)}` has been deleted."
-    )
+    await message.reply_text(f"Extra(s) `{', '.join(extra_names)}` has been deleted.")
     await reporter.report_full_by_user(
         "Extra deleted",
         f"Extra `{', '.join(extra_names)}` has been deleted.",
@@ -199,7 +206,9 @@ async def get_extra_requested(
             config.extra_channel_id,
             extra.extra_message_id,
             reply_to_message_id=(
-                message.id if not replied else message.reply_to_message_id
+                0
+                if extra.is_quote
+                else (message.id if not replied else message.reply_to_message_id)
             ),
         )
 
@@ -208,9 +217,7 @@ async def get_extra_requested(
                 # It can be pointed to someone else, then ignore it
                 return
 
-            game_info = database.game_infos.find_one(
-                {"chat_id": message.chat.id}
-            )
+            game_info = database.game_infos.find_one({"chat_id": message.chat.id})
             if not game_info:
                 return
 
