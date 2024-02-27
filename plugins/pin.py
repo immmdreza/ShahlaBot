@@ -8,7 +8,7 @@ from services.reporter import Reporter
 from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(shahla_command("pin", , description="Pin a message", notes=("Admins only", "Reply only")) & group)  # type: ignore
+@Shahla.on_message(shahla_command("pin", description="Pin a message", notes=("Admins only", "Reply only")) & group)  # type: ignore
 @async_injector
 async def on_pin_requested(
     _: Shahla,
@@ -31,5 +31,7 @@ async def on_pin_requested(
         await message.reply_text("please reply to a message")
 
     await reporter.report_full_by_user(
-        "Pin", f"\n{message.from_user.first_name}) pinned a message", message.from_user
+        "Pin",
+        f"\n{message.from_user.first_name}) pinned a message",
+        message.from_user,
     )
