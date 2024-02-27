@@ -81,9 +81,9 @@ class CommandInfo:
             if isinstance(self.commands, str)
             else " or ".join(self.commands)
         )
-        notes_fmt = "-\n ".join(self.notes)
+        notes_fmt = "\n- ".join(self.notes)
 
-        return f'`({", ".join(self.prefixes)}) {commands_fmt}`\n_{self.description or "No description"}_\n- {notes_fmt}'
+        return f'`({", ".join(self.prefixes)}) {commands_fmt}`\n__{self.description or "No description"}__\n- {notes_fmt}'
 
 
 class Shahla(Generic[T], Client):

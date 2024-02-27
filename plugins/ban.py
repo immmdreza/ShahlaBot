@@ -11,10 +11,10 @@ from models.configuration import Configuration
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(command("ban") & group)  # type: ignore
+@Shahla.on_message(shahla_command("ban", description="Ban someone.", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def ban(
     shahla: Shahla,
@@ -30,8 +30,8 @@ async def ban(
 
     sender_id = message.from_user.id
 
-    target_user, others = await shahla.resolve_target_user_and_others_from_command(
-        message
+    target_user, others = (
+        await shahla.resolve_target_user_and_others_from_command(message)
     )
 
     if target_user is None or not any(others):

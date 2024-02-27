@@ -5,10 +5,10 @@ import services.database_helpers as db_helpers
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(command("unpin") & group)  # type: ignore
+@Shahla.on_message(shahla_command("unpin", , description="Unpin a message.", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_unpin_requested(
     _: Shahla,

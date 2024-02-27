@@ -8,10 +8,10 @@ from models.extra_info import ExtraInfo
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(command("setextra") & reply)  # type: ignore
+@Shahla.on_message(shahla_command("setextra", description="Sets an extra", notes=("Admins only", "Put extra without the #.")) & reply)  # type: ignore
 @async_injector
 async def set_extra_requested(
     _: Shahla,
@@ -81,7 +81,7 @@ async def set_extra_requested(
     )
 
 
-@Shahla.on_message(command("delextra"))  # type: ignore
+@Shahla.on_message(shahla_command("delextra", description="Deletes an extra", notes=("Admins only",)))  # type: ignore
 @async_injector
 async def del_extra_requested(
     _: Shahla,
@@ -126,7 +126,9 @@ async def del_extra_requested(
                 pass
             extra_list.delete_one({"extra_name": extra_name})
 
-    await message.reply_text(f"Extra(s) `{', '.join(extra_names)}` has been deleted.")
+    await message.reply_text(
+        f"Extra(s) `{', '.join(extra_names)}` has been deleted."
+    )
     await reporter.report_full_by_user(
         "Extra deleted",
         f"Extra `{', '.join(extra_names)}` has been deleted.",
@@ -134,7 +136,7 @@ async def del_extra_requested(
     )
 
 
-@Shahla.on_message(command("extralist"))  # type: ignore
+@Shahla.on_message(shahla_command("extralist", description="Lists extras", notes=("Admins only",)))  # type: ignore
 @async_injector
 async def list_extra_requested(
     _: Shahla,
@@ -206,7 +208,9 @@ async def get_extra_requested(
                 # It can be pointed to someone else, then ignore it
                 return
 
-            game_info = database.game_infos.find_one({"chat_id": message.chat.id})
+            game_info = database.game_infos.find_one(
+                {"chat_id": message.chat.id}
+            )
             if not game_info:
                 return
 

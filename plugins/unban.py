@@ -1,4 +1,4 @@
-from pyrogram.filters import command, group
+from pyrogram.filters import group
 from pyrogram.types import Message
 
 import services.database_helpers as db_helpers
@@ -6,14 +6,16 @@ from models.configuration import Configuration
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 UNBAN_MESSAGE_FMT = (
-    "User {target_fn} has been unbanned " "By: {admin_fn}\n" "Reason: {reason}\n"
+    "User {target_fn} has been unbanned "
+    "By: {admin_fn}\n"
+    "Reason: {reason}\n"
 )
 
 
-@Shahla.on_message(command("unban") & group)  # type: ignore
+@Shahla.on_message(shahla_command("unban", description="Unban user.", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_unban_requested(
     shahla: Shahla,
@@ -27,8 +29,8 @@ async def on_unban_requested(
     if not message.from_user:
         return
 
-    target_user, others = await shahla.resolve_target_user_and_others_from_command(
-        message
+    target_user, others = (
+        await shahla.resolve_target_user_and_others_from_command(message)
     )
     if not target_user:
         await message.reply_text(
@@ -75,4 +77,6 @@ async def on_unban_requested(
     )
     await shahla.unban_chat_member(message.chat.id, target_user.id)
     await message.reply_text(text)
-    await reporter.report_full_by_user("Unban", text, message.from_user, target_user)
+    await reporter.report_full_by_user(
+        "Unban", text, message.from_user, target_user
+    )

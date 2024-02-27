@@ -6,7 +6,7 @@ from models.configuration import Configuration
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 UN_WARN_MESSAGE_FMT = (
     "User {target_fn} has been unwarned "
@@ -16,7 +16,7 @@ UN_WARN_MESSAGE_FMT = (
 )
 
 
-@Shahla.on_message(command("unwarn") & group)  # type: ignore
+@Shahla.on_message(shahla_command("unwarn", , description="Removes someones's warning", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_un_warn_requested(
     shahla: Shahla,

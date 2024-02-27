@@ -8,10 +8,10 @@ from models.game_info import GameInfo
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(command("shekar") & group)  # type: ignore
+@Shahla.on_message(shahla_command("shekar", description="Sets shekar!", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def shekar(
     shahla: Shahla, message: Message, database: Database, reporter: Reporter
@@ -31,7 +31,9 @@ async def shekar(
     )
 
     if admin is None:
-        await message.reply_text("❌ شما دسترسی لازم برای اجرای این دستور را ندارید.")
+        await message.reply_text(
+            "❌ شما دسترسی لازم برای اجرای این دستور را ندارید."
+        )
         return
 
     games = database.game_infos
@@ -74,7 +76,9 @@ async def ski(shahla: Shahla, message: Message, database: Database):
         return
 
     if not game.shekar_user_id:
-        await message.reply_text("🌭 There's no **CultistHunter** in this game.")
+        await message.reply_text(
+            "🌭 There's no **CultistHunter** in this game."
+        )
         return
 
     ski_text: str | None = None
@@ -89,7 +93,9 @@ async def ski(shahla: Shahla, message: Message, database: Database):
 
     if ski_text:
         if game.shekar_user_id != sender_id:
-            await message.reply_text("🌭 Only **CultistHunter** can set ski text.")
+            await message.reply_text(
+                "🌭 Only **CultistHunter** can set ski text."
+            )
             return
         else:
             # set ski text

@@ -6,14 +6,14 @@ from models.configuration import Configuration
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 UNMUTE_MESSAGE_FMT = (
     "User {target_fn} has been unmuted " "By: {admin_fn}\n" "Reason: {reason}\n"
 )
 
 
-@Shahla.on_message(command("unmute") & group)  # type: ignore
+@Shahla.on_message(shahla_command("unmute", description="Unmute someone.", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_unmute_requested(
     shahla: Shahla,
@@ -27,8 +27,8 @@ async def on_unmute_requested(
     if not message.from_user:
         return
 
-    target_user, others = await shahla.resolve_target_user_and_others_from_command(
-        message
+    target_user, others = (
+        await shahla.resolve_target_user_and_others_from_command(message)
     )
     if not target_user:
         await message.reply_text(
@@ -88,4 +88,6 @@ async def on_unmute_requested(
         ),
     )
     await message.reply_text(text)
-    await reporter.report_full_by_user("Unmuted", text, message.from_user, target_user)
+    await reporter.report_full_by_user(
+        "Unmuted", text, message.from_user, target_user
+    )

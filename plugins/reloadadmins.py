@@ -8,10 +8,10 @@ from models.configuration import Configuration
 from models.group_admin import GroupAdmin, Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(filters.command("reload") & filters.group)  # type: ignore
+@Shahla.on_message(shahla_command("reload", description="Reload admins.", notes=("Super Admins only",)) & filters.group)  # type: ignore
 @async_injector
 async def reload_admins(
     _: Shahla,
@@ -48,7 +48,8 @@ async def reload_admins(
             continue
 
         if any(
-            admin.user.id == saved_admin.user_chat_id for saved_admin in saved_admins
+            admin.user.id == saved_admin.user_chat_id
+            for saved_admin in saved_admins
         ):
             ignored += 1
             continue
@@ -64,9 +65,12 @@ async def reload_admins(
     for saved_admin in saved_admins:
         if saved_admin.user_chat_id not in found_admin_ids:
             removed += 1
-            database.group_admins.delete_one({"user_chat_id": saved_admin.user_chat_id})
+            database.group_admins.delete_one(
+                {"user_chat_id": saved_admin.user_chat_id}
+            )
 
     await message.reply("Admins reloaded.")
     await reporter.report(
-        "Admins reloaded.", f"\n{added} added, {removed} removed, {ignored} ignored."
+        "Admins reloaded.",
+        f"\n{added} added, {removed} removed, {ignored} ignored.",
     )

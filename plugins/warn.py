@@ -9,7 +9,7 @@ from models.group_admin import Permissions
 from models.user_warnings import UserWarning
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 WARN_MESSAGE_FMT = (
     "User {target_fn} has been warned "
@@ -19,7 +19,7 @@ WARN_MESSAGE_FMT = (
 )
 
 
-@Shahla.on_message(command("warn") & group)  # type: ignore
+@Shahla.on_message(shahla_command("warn", description="Warns a user.", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_warn_requested(
     shahla: Shahla,
@@ -34,8 +34,8 @@ async def on_warn_requested(
     if not message.from_user:
         return
 
-    target_user, others = await shahla.resolve_target_user_and_others_from_command(
-        message
+    target_user, others = (
+        await shahla.resolve_target_user_and_others_from_command(message)
     )
     if not target_user:
         await message.reply_text(
@@ -117,7 +117,9 @@ async def on_warn_requested(
                 )
                 return
             else:
-                await message.reply_text("You can't warn a user with maximum warns.")
+                await message.reply_text(
+                    "You can't warn a user with maximum warns."
+                )
                 return
 
         warnings.update_model(warning)

@@ -2,10 +2,10 @@ from pyrogram.filters import command
 from pyrogram.types import Message
 
 from models.configuration import Configuration
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(command("prmedtr"))  # type: ignore
+@Shahla.on_message(shahla_command("prmedtr", description="Changes an admin permissions.", notes=("Super Admins only",)))  # type: ignore
 @async_injector
 async def request_permission_editor(
     shahla: Shahla, message: Message, config: Configuration
@@ -27,4 +27,6 @@ async def request_permission_editor(
     )
 
     result = results.results[0]
-    await shahla.send_inline_bot_result(message.chat.id, results.query_id, result.id)
+    await shahla.send_inline_bot_result(
+        message.chat.id, results.query_id, result.id
+    )

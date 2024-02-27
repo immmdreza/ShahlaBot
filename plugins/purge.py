@@ -11,10 +11,10 @@ import services.database_helpers as db_helpers
 from models.group_admin import Permissions
 from services.database import Database
 from services.reporter import Reporter
-from shahla import Shahla, async_injector
+from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(command("purge") & group & reply)  # type: ignore
+@Shahla.on_message(shahla_command("purge", description="Mass deletions of a bunch of messages", notes=("Admins only", "Reply only")) & group & reply)  # type: ignore
 @async_injector
 async def on_purge_requested(
     shahla: Shahla,
