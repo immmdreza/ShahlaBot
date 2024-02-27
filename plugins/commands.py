@@ -1,3 +1,4 @@
+from pyrogram.enums.parse_mode import ParseMode
 from pyrogram.types import Message
 
 import services.database_helpers as db_helpers
@@ -6,7 +7,7 @@ from services.database import Database
 from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(shahla_command("commands", description="Shows this message.", notes=("Admins only")))  # type: ignore
+@Shahla.on_message(shahla_command("commands", description="Shows this message.", notes=("Admins only",)))  # type: ignore
 @async_injector
 async def on_commands_requested(
     _: Shahla,
@@ -26,5 +27,6 @@ async def on_commands_requested(
 
     await message.reply_text(
         "Available Commands:\n\n"
-        + "\n\n".join(map(lambda x: str(x), Shahla.commands))
+        + "\n\n".join(map(lambda x: str(x), Shahla.commands)),
+        parse_mode=ParseMode.MARKDOWN,
     )

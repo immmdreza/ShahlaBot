@@ -73,7 +73,7 @@ async def on_admin_requested(
             pass
 
 
-@Shahla.on_message(shahla_command("repoff", description="Turn off message reporting using (@admin,/admin) for a user", notes=("Admins only")) & group)  # type: ignore
+@Shahla.on_message(shahla_command("repoff", description="Turn off message reporting using (@admin,/admin) for a user", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_repoff_requested(
     _: Shahla,

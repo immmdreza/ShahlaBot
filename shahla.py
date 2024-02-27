@@ -76,7 +76,14 @@ class CommandInfo:
     notes: tuple[str, ...] = ()
 
     def __str__(self) -> str:
-        return f'`({", ".join(self.prefixes)}) {" or ".join(self.commands)}`\n_{self.description or "No description"}_\n- {"- ".join(self.notes)}'
+        commands_fmt = (
+            self.commands
+            if isinstance(self.commands, str)
+            else " or ".join(self.commands)
+        )
+        notes_fmt = "-\n ".join(self.notes)
+
+        return f'`({", ".join(self.prefixes)}) {commands_fmt}`\n_{self.description or "No description"}_\n- {notes_fmt}'
 
 
 class Shahla(Generic[T], Client):
@@ -403,4 +410,4 @@ def shahla_command(
     """
     info = CommandInfo(commands, prefixes, description, notes)
     Shahla.commands.append(info)
-    return command(commands=commands, prefixes=prefixes)
+    return command(commands, prefixes)
