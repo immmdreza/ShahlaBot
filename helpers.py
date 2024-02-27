@@ -2,15 +2,18 @@ import json
 import os
 import re
 from datetime import timedelta
-from typing import Any, Callable, overload
+from typing import Any, Callable, TypeVar, overload
 
 
 @overload
 def get_from_env(key: str, caster: None = None) -> str: ...
 
 
+T = TypeVar("T")
+
+
 @overload
-def get_from_env[T](key: str, caster: Callable[..., T]) -> T: ...
+def get_from_env(key: str, caster: Callable[..., T]) -> T: ...
 
 
 def get_from_env(key: str, caster: Any = None) -> Any:

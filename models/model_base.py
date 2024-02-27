@@ -1,12 +1,14 @@
 from dataclasses import asdict, dataclass, field
-from typing import Any, Self
+from typing import Any, Self, TypeVar
 
 from bson.objectid import ObjectId
 
 from ._filter_builder import _FilterBuilder
 
+T = TypeVar("T")
 
-def deserialize[T](cls: type[T], data: dict[str, Any] | None) -> T | None:
+
+def deserialize(cls: type[T], data: dict[str, Any] | None) -> T | None:
     if data is None:
         return None
     return cls(**data)
@@ -17,7 +19,11 @@ class ModelBase:
     _id: ObjectId | None = field(default=None, kw_only=True)
 
     def serialize(self) -> dict[str, Any]:
-        return {k: v for k, v in asdict(self).items() if v is not None and k != "_id"}
+        return {
+            k: v
+            for k, v in asdict(self).items()
+            if v is not None and k != "_id"
+        }
 
     @classmethod
     def deserialize(cls, data: dict[str, Any] | None) -> Self | None:

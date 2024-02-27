@@ -1,6 +1,6 @@
 from html import escape
 
-from pyrogram.filters import group, reply
+from pyrogram.filters import group
 from pyrogram.types import Message
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ExtBot
@@ -14,7 +14,7 @@ from services.reporter import Reporter
 from shahla import Shahla, async_injector, shahla_command
 
 
-@Shahla.on_message(shahla_command("admin", ["/", "@"], "Report a message to the admins", ("Everyone can use", "Use either @admin or /admin", "Must be replied")) & group & reply)  # type: ignore
+@Shahla.on_message(shahla_command("admin", ["/", "@"], "Report a message to the admins", ("Everyone can use", "Use either @admin or /admin", "Must be replied")) & group)  # type: ignore
 @async_injector
 async def on_admin_requested(
     _: Shahla,
@@ -27,6 +27,9 @@ async def on_admin_requested(
         return
 
     if not message.reply_to_message:
+        await message.reply_text(
+            "این دستور رو باید روی یک پبام دیگه ریپلای کنی."
+        )
         return
 
     user = database.user_warnings.find_one(
