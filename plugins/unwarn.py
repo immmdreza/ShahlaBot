@@ -16,7 +16,7 @@ UN_WARN_MESSAGE_FMT = (
 )
 
 
-@Shahla.on_message(shahla_command("unwarn", , description="Removes someones's warning", notes=("Admins only",)) & group)  # type: ignore
+@Shahla.on_message(shahla_command("unwarn", description="Removes someones's warning", notes=("Admins only",)) & group)  # type: ignore
 @async_injector
 async def on_un_warn_requested(
     shahla: Shahla,
@@ -31,8 +31,8 @@ async def on_un_warn_requested(
     if not message.from_user:
         return
 
-    target_user, others = await shahla.resolve_target_user_and_others_from_command(
-        message
+    target_user, others = (
+        await shahla.resolve_target_user_and_others_from_command(message)
     )
     if not target_user:
         await message.reply_text(
