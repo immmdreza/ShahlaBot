@@ -130,8 +130,12 @@ class Shahla(Generic[T], Client):
         if not hasattr(self, "_registered_types"):
             raise ValueError("No registered types.")
 
-        model = self._registered_types[the_type]
-        return Scope(scope_name, self, model)
+        try:
+            model = self._registered_types[the_type]
+            return Scope(scope_name, self, model)
+        except KeyError as e:
+            print("Available types:", *self._registered_types)
+            raise e
 
     async def resolve_target_user_from_command(self, message: Message) -> User | None:
         if message.command:
