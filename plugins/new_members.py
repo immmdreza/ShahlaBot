@@ -13,8 +13,8 @@ from shahla import Shahla, async_injector
 @async_injector
 async def on_new_chat_member(
     _: Shahla,
-    app: Application,
     message: Message,
+    app: Application,
     reporter: Reporter,
     database: Database,
 ):
