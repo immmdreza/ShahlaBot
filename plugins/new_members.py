@@ -2,7 +2,7 @@ from html import escape
 
 from pyrogram.filters import group, new_chat_members
 from pyrogram.types import Message
-from telegram.ext import ExtBot
+from telegram.ext import Application, ExtBot
 
 from services.database import Database
 from services.reporter import Reporter
@@ -13,7 +13,7 @@ from shahla import Shahla, async_injector
 @async_injector
 async def on_new_chat_member(
     _: Shahla,
-    bot: ExtBot,
+    app: Application,
     message: Message,
     reporter: Reporter,
     database: Database,
@@ -21,6 +21,7 @@ async def on_new_chat_member(
     new_members = message.new_chat_members
 
     chat_id = message.chat.id
+    bot: ExtBot = app.bot
 
     for user in new_members:
         await bot.send_message(

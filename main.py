@@ -83,7 +83,7 @@ async def main():
         LifeTime.Scoped,
     )
     shahla.register_type(Application, lambda _: application)
-    shahla.register_type(ExtBot, lambda _: application.bot)
+    # shahla.register_type(ExtBot, lambda _: application.bot)
 
     await shahla.start()
 
