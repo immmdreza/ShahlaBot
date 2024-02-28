@@ -18,6 +18,7 @@ import helpers
 
 # import services.group_lock as lock_service
 from models.configuration import Configuration
+from plugins.bot_handlers import rules_accepted
 from plugins.bot_handlers.permission_editor import (
     close_editor_handler,
     edit_permissions_handler,
@@ -93,9 +94,10 @@ async def main():
     application.bot_data["shahla"] = shahla
 
     application.add_handler(chat_member_updated_handler)
-    application.add_handler(open_permission_editor_handler)
-    application.add_handler(edit_permissions_handler)
-    application.add_handler(close_editor_handler)
+    application.add_handlers(
+        [open_permission_editor_handler, edit_permissions_handler, close_editor_handler]
+    )
+    application.add_handler(rules_accepted.rules_accepted_handler)
 
     bot_info = await application.bot.get_me()
     print(f"User bot is {bot_info.first_name}", bot_info.id)

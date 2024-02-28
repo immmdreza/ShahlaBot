@@ -1,4 +1,4 @@
-from pyrogram.filters import command, group
+from pyrogram.filters import group
 from pyrogram.types import ChatPermissions, Message
 
 import services.database_helpers as db_helpers

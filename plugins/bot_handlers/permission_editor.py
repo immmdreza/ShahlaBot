@@ -1,13 +1,13 @@
 from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     InlineQueryResultArticle,
     InputTextMessageContent,
     Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
 )
-from telegram.ext import ContextTypes, CallbackQueryHandler, InlineQueryHandler
-from models.configuration import Configuration
+from telegram.ext import CallbackQueryHandler, ContextTypes, InlineQueryHandler
 
+from models.configuration import Configuration
 from models.group_admin import Permissions
 from services.database import Database
 from shahla import async_injector_from_ctx
