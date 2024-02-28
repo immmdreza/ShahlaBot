@@ -12,7 +12,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Application, ApplicationBuilder
+from telegram.ext import Application, ApplicationBuilder, ExtBot
 
 import helpers
 
@@ -83,6 +83,7 @@ async def main():
         LifeTime.Scoped,
     )
     shahla.register_type(Application, lambda _: application)
+    shahla.register_type(ExtBot, lambda _: application.bot)
 
     await shahla.start()
 

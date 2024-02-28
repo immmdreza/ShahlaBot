@@ -30,8 +30,8 @@ async def mute(
 
     sender_id = message.from_user.id
 
-    target_user, others = (
-        await shahla.resolve_target_user_and_others_from_command(message)
+    target_user, others = await shahla.resolve_target_user_and_others_from_command(
+        message
     )
 
     if target_user is None or not any(others):
@@ -84,7 +84,11 @@ async def mute(
         await shahla.restrict_chat_member(
             message.chat.id,
             target_user.id,
-            ChatPermissions(can_send_messages=False),
+            ChatPermissions(
+                can_send_messages=False,
+                can_send_media_messages=False,
+                can_send_other_messages=False,
+            ),
             until_date=till_date,
         )
         await message.reply_text(

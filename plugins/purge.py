@@ -4,7 +4,7 @@ Description: Deletes all messages from replied message till this message.
 Permissions: NiniAdmin+
 """
 
-from pyrogram.filters import command, group, reply
+from pyrogram.filters import group, reply
 from pyrogram.types import Message
 
 import services.database_helpers as db_helpers

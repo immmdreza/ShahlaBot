@@ -2,7 +2,7 @@
 Shows user status in group, including number of warnings and admin status.
 """
 
-from pyrogram.filters import command, group
+from pyrogram.filters import group
 from pyrogram.types import Message
 
 import services.database_helpers as db_helpers

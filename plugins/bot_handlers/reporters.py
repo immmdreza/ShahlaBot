@@ -5,12 +5,12 @@ logging.basicConfig(
 )
 
 from typing import cast
+
 from telegram import Update
-from telegram.ext import ContextTypes, ChatMemberHandler
+from telegram.ext import ChatMemberHandler, ContextTypes
 
-from shahla import Shahla, async_injector_from_ctx
 from services.reporter import Reporter
-
+from shahla import Shahla, async_injector_from_ctx
 
 CHAT_MEMBER_MESSAGE_FMT = """From: __{old_status}__
 To: __{new_status}__

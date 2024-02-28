@@ -27,8 +27,8 @@ async def on_unmute_requested(
     if not message.from_user:
         return
 
-    target_user, others = (
-        await shahla.resolve_target_user_and_others_from_command(message)
+    target_user, others = await shahla.resolve_target_user_and_others_from_command(
+        message
     )
     if not target_user:
         await message.reply_text(
@@ -81,13 +81,11 @@ async def on_unmute_requested(
             can_send_media_messages=True,
             can_send_other_messages=True,
             can_send_polls=True,
-            can_add_web_page_previews=True,
-            can_change_info=True,
-            can_invite_users=True,
-            can_pin_messages=True,
+            # can_add_web_page_previews=True,
+            # can_change_info=True,
+            # can_invite_users=True,
+            # can_pin_messages=True,
         ),
     )
     await message.reply_text(text)
-    await reporter.report_full_by_user(
-        "Unmuted", text, message.from_user, target_user
-    )
+    await reporter.report_full_by_user("Unmuted", text, message.from_user, target_user)

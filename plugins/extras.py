@@ -1,5 +1,4 @@
-import pyrogram
-from pyrogram.filters import command, regex, reply
+from pyrogram.filters import regex, reply
 from pyrogram.types import Message
 from telegram.ext import Application, ExtBot
 

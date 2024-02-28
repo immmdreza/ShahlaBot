@@ -1,4 +1,3 @@
-from pyrogram.filters import command
 from pyrogram.types import Message
 
 from models.configuration import Configuration
@@ -27,6 +26,4 @@ async def request_permission_editor(
     )
 
     result = results.results[0]
-    await shahla.send_inline_bot_result(
-        message.chat.id, results.query_id, result.id
-    )
+    await shahla.send_inline_bot_result(message.chat.id, results.query_id, result.id)
