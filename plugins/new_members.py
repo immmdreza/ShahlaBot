@@ -2,6 +2,7 @@ from html import escape
 
 from pyrogram.filters import group, new_chat_members
 from pyrogram.types import Message
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ExtBot
 
 from services.database import Database
@@ -26,6 +27,24 @@ async def on_new_chat_member(
     for user in new_members:
         await bot.send_message(
             chat_id,
-            f"Hello {escape(user.first_name)}, Welcome to the <b>Tasky Event Group</b>.",
+            f"🔮 سلام <b>{escape(user.first_name)}</b>، به گروه رویداد های تسک خوش آمدی!\n\n"
+            + "یادت نره حتما قوانین بازی در این رویداد رو کامل و با دقت بخونی که خدایی نکرده بن نشی :(",
             parse_mode="html",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "قوانین رویداد", url="https://t.me/TaskyEvents"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "راهنمای شرکت در رویداد",
+                            url="https://t.me/TaskyEventsGuide",
+                        )
+                    ],
+                ]
+            ),
         )
+
+        await reporter.report("NewMember", f"{user.first_name} [{user.id}] Joined.")
