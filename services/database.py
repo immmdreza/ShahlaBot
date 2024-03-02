@@ -1,12 +1,4 @@
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Generic,
-    Iterable,
-    Optional,
-    TypeVar,
-)
+from typing import Any, Callable, Generator, Generic, Iterable, Optional, TypeVar
 
 import pymongo.collection
 import pymongo.mongo_client
@@ -15,17 +7,17 @@ from models import ModelBase
 from models._filter_builder import _FilterBuilder
 from models.configuration import Configuration
 from models.extra_info import ExtraInfo
+from models.game_actions import GameAction
 from models.game_info import GameInfo
 from models.group_admin import GroupAdmin
+from models.role_info import RoleInfo
 from models.user_warnings import UserWarning
 
 T = TypeVar("T", bound=ModelBase)
 
 
 class Collection(Generic[T]):
-    def __init__(
-        self, entity_type: type[T], collection: pymongo.collection.Collection
-    ):
+    def __init__(self, entity_type: type[T], collection: pymongo.collection.Collection):
         self._entity_type = entity_type
         self._collection = collection
 
@@ -44,15 +36,10 @@ class Collection(Generic[T]):
         )
 
     def find_one(self, *args: Any, **kwargs: Any) -> Optional[T]:
-        return self._entity_type.deserialize(
-            self._collection.find_one(*args, **kwargs)
-        )
+        return self._entity_type.deserialize(self._collection.find_one(*args, **kwargs))
 
     def find_one_by_filter(
-        self,
-        filter: Callable[[_FilterBuilder[T]], Any],
-        *args: Any,
-        **kwargs: Any
+        self, filter: Callable[[_FilterBuilder[T]], Any], *args: Any, **kwargs: Any
     ) -> Optional[T]:
         flt = _FilterBuilder(self._entity_type)
         filter(flt)
@@ -61,9 +48,7 @@ class Collection(Generic[T]):
         )
 
     def insert_one(self, document: T, *args: Any, **kwargs: Any):
-        return self._collection.insert_one(
-            document.serialize(), *args, **kwargs
-        )
+        return self._collection.insert_one(document.serialize(), *args, **kwargs)
 
     def insert_many(self, documents: Iterable[T], *args: Any, **kwargs: Any):
         return self._collection.insert_many(
@@ -72,9 +57,7 @@ class Collection(Generic[T]):
 
     def update_model(self, update: T, *args: Any, **kwargs: Any):
         flt = {"_id": update.id}
-        return self.update_one(
-            flt, {"$set": update.serialize()}, *args, **kwargs
-        )
+        return self.update_one(flt, {"$set": update.serialize()}, *args, **kwargs)
 
     def update_one(self, filter: Any, update: Any, *args: Any, **kwargs: Any):
         return self._collection.update_one(filter, update, *args, **kwargs)
@@ -91,6 +74,9 @@ class Collection(Generic[T]):
     def exists(self, filter: Any, *args: Any, **kwargs: Any) -> bool:
         return self._collection.count_documents(filter, *args, **kwargs) > 0
 
+    def clear(self):
+        return self._collection.drop()
+
 
 class Database:
     def __init__(self, __name: str | None = None, __host: str | None = None):
@@ -102,11 +88,11 @@ class Database:
         self._group_admins: Optional[Collection[GroupAdmin]] = None
         self._extra_infos: Optional[Collection[ExtraInfo]] = None
         self._game_infos: Optional[Collection[GameInfo]] = None
+        self._role_infos: Optional[Collection[RoleInfo]] = None
+        self._game_actions: Optional[Collection[GameAction]] = None
 
     def get_collection(self, entity_type: type[T]) -> Collection[T]:
-        return Collection(
-            entity_type, self.db.get_collection(entity_type.__name__)
-        )
+        return Collection(entity_type, self.db.get_collection(entity_type.__name__))
 
     @property
     def configurations(self) -> Collection[Configuration]:
@@ -137,6 +123,18 @@ class Database:
         if self._game_infos is None:
             self._game_infos = self.get_collection(GameInfo)
         return self._game_infos
+
+    @property
+    def role_infos(self) -> Collection[RoleInfo]:
+        if self._role_infos is None:
+            self._role_infos = self.get_collection(RoleInfo)
+        return self._role_infos
+
+    @property
+    def game_actions(self) -> Collection[GameAction]:
+        if self._game_actions is None:
+            self._game_actions = self.get_collection(GameAction)
+        return self._game_actions
 
     def set_up(self, config: Configuration):
         col = self.configurations
