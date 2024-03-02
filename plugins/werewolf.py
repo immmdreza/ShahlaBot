@@ -74,7 +74,7 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
 
             print(f"{old_alive_players=}, {game.alive_players=}")
             if (players := parse_werewolf_list(message.text)) is not None:
-                new_dead_players = list(players)[
+                new_dead_players = list(x for x in players if x.alive_emoji == "💀")[
                     game.alive_players - old_alive_players :
                 ]
                 for player in new_dead_players:
