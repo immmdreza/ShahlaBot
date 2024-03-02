@@ -69,7 +69,37 @@ class GunnerShot(WerewolfAction):
         return 0
 
 
-available_actions: list[WerewolfAction] = [GunnerShot()]
+class HunterFinalShot(WerewolfAction):
+    @property
+    def name(self) -> str:
+        return "Hunter's final shot"
+
+    @property
+    def done_by_role(self):
+        return WerewolfRole.Hunter
+
+    def worth(self, data: WerewolfActionData) -> int:
+        if data.done_to_role in villager_enemies:
+            return 10
+        return 0
+
+    def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
+        if (
+            matched := re.match(
+                r"کلانتر یعنی (.*) لحظاتی قبل از مرگش اسلحه رو درآورد و به (.*) شلیک کرد به امید اینکه یه گرگ رو هم با خودش کشته باشه. (.*) چیزی نبود جز یک (?P<role>.*)",
+                message_text,
+            )
+            or re.match(
+                r"کلانتر یعنی (.*) آخرین لحظه تفنگشو در آورد و (.*) رو کشت. (.*) چیزی نبود جز یک (?P<role>.*)",
+                message_text,
+            )
+        ) is not None:
+            role_text = matched.groupdict()["role"]
+            role = WerewolfRole.from_role_text(role_text)
+            return WerewolfActionPartialData(done_to_role=role)
+
+
+available_actions: list[WerewolfAction] = [GunnerShot(), HunterFinalShot()]
 
 
 def matched_actions(message_text: str):
