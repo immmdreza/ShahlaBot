@@ -29,6 +29,9 @@ class WerewolfAction(ABC):
     @abstractproperty
     def done_by_role(self) -> WerewolfRole: ...
 
+    @abstractproperty
+    def is_one_time(self) -> bool: ...
+
     @abstractmethod
     def _extract_data(
         self, message_text: str
@@ -42,11 +45,17 @@ class WerewolfAction(ABC):
             return WerewolfActionData(done_by_role=self.done_by_role, partial=partial)
 
 
-class GunnerShot(WerewolfAction):
+class OnetimeWerewolfAction(WerewolfAction, ABC):
+    @property
+    def is_one_time(self) -> bool:
+        return True
+
+
+class GunnerShot(OnetimeWerewolfAction):
 
     @property
     def name(self) -> str:
-        return "Gunner shot"
+        return "تیر موفق به نقش های ضد روستایی"
 
     @property
     def done_by_role(self):
@@ -69,10 +78,10 @@ class GunnerShot(WerewolfAction):
         return 0
 
 
-class HunterFinalShot(WerewolfAction):
+class HunterFinalShot(OnetimeWerewolfAction):
     @property
     def name(self) -> str:
-        return "Hunter's final shot"
+        return "اخرین تیر موفق به نقش ضد روستایی"
 
     @property
     def done_by_role(self):

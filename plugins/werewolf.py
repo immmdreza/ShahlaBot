@@ -5,6 +5,7 @@ from pyrogram.filters import group, text, user
 from pyrogram.types import Message
 
 from helpers import parse_werewolf_list
+from models.game_actions import GameAction
 from models.game_info import GameInfo
 from models.role_info import RoleInfo
 from services.database import Database
@@ -67,7 +68,10 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
             if game is None:
                 return
 
-            old_alive_players = game.alive_players
+            if game.finished:
+                old_alive_players = game.players_count
+            else:
+                old_alive_players = game.alive_players
 
             game.players_count = int(all_players)
             game.alive_players = int(alive_players)
@@ -84,9 +88,26 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                     )
                     if result.modified_count == 1:
                         user_id = database.role_infos.find_one({"role": player.role}).user_id  # type: ignore
-                        await message.reply_text(
-                            f"User {player.name} [{user_id}] is dead with role {player.role}"
-                        )
+                        # await message.reply_text(
+                        #     f"User {player.name} [{user_id}] is dead with role {player.role}"
+                        # )
+                        if (
+                            game_action := database.game_actions.find_one(
+                                {"done_by_role": player.role}
+                            )
+                        ) is not None:
+                            if game_action.one_time:
+                                database.game_actions.delete_one(
+                                    {"_id": game_action.id}
+                                )
+
+                            await message.reply_text(
+                                f"کاربر {player.name} [{user_id}]، {game_action.worth} امتیاز به خاطر حرکتش حین بازی دریافت میکنه."
+                            )
+                            msg = await message.reply_text(
+                                f"/cup {user_id} +{game_action.worth}"
+                            )
+                            await msg.delete()
 
             end_match = END_GAME_PATTERN.search(text)
             if end_match:
@@ -108,6 +129,15 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
 
         for action, data in matched_actions(text):
             worth = action.worth(data)
-            await message.reply_text(
-                f"Got {action.name} done on {data.done_to_role.to_role_text()}, worths {worth}"
-            )
+            # save action!
+            if worth > 0:
+                await message.reply_text(
+                    f"{action.done_by_role.to_role_text()} تونست حرکت '{action.name}' رو به ارزش {worth} امتیاز انجام بده."
+                )
+                database.game_actions.insert_one(
+                    GameAction(
+                        done_by_role=data.done_by_role.to_role_text(),
+                        worth=worth,
+                        one_time=action.is_one_time,
+                    )
+                )
