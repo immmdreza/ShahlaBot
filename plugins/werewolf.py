@@ -76,21 +76,29 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
             game.players_count = int(all_players)
             game.alive_players = int(alive_players)
 
+            end_match = END_GAME_PATTERN.search(text)
+
             print(f"{old_alive_players=}, {game.alive_players=}")
             if (players := parse_werewolf_list(message.text)) is not None:
-                new_dead_players = list(x for x in players if x.alive_emoji == "💀")[
-                    game.alive_players - old_alive_players :
-                ]
-                for player in new_dead_players:
+                if end_match:
+                    # if it's end game check all alive + new dead
+                    players_to_check = list(x for x in players)[
+                        (game.alive_players - old_alive_players) - game.alive_players :
+                    ]
+                else:
+                    # Check only new dead players
+                    players_to_check = list(
+                        x for x in players if x.alive_emoji == "💀"
+                    )[game.alive_players - old_alive_players :]
+
+                for player in players_to_check:
                     result = database.role_infos.update_one(
                         {"in_game_name": player.name},
                         {"$set": {"role": player.role, "alive": False}},
                     )
                     if result.modified_count == 1:
                         user_id = database.role_infos.find_one({"role": player.role}).user_id  # type: ignore
-                        # await message.reply_text(
-                        #     f"User {player.name} [{user_id}] is dead with role {player.role}"
-                        # )
+                        await message.reply_text(f"Searching actions for {player.role}")
                         if (
                             game_action := database.game_actions.find_one(
                                 {"done_by_role": player.role}
@@ -109,7 +117,6 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                             )
                             await msg.delete()
 
-            end_match = END_GAME_PATTERN.search(text)
             if end_match:
                 game.finished = True
                 games.update_model(game)
