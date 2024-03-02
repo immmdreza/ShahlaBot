@@ -68,6 +68,11 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                 return
 
             old_alive_players = game.alive_players
+
+            game.players_count = int(all_players)
+            game.alive_players = int(alive_players)
+
+            print(f"{old_alive_players=}, {game.alive_players=}")
             if (players := parse_werewolf_list(message.text)) is not None:
                 new_dead_players = list(players)[
                     game.alive_players - old_alive_players :
@@ -82,9 +87,6 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                         await message.reply_text(
                             f"User {player.name} [{user_id}] is dead with role {player.role}"
                         )
-
-            game.players_count = int(all_players)
-            game.alive_players = int(alive_players)
 
             end_match = END_GAME_PATTERN.search(text)
             if end_match:
