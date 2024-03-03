@@ -115,10 +115,9 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                             await message.reply_text(
                                 f"کاربر {player.name} [{user_id}]، {game_action.worth} امتیاز به خاطر حرکتش حین بازی دریافت میکنه."
                             )
-                            msg = await message.reply_text(
+                            await message.reply_text(
                                 f"/cup {user_id} +{game_action.worth}"
                             )
-                            await msg.delete()
 
             if end_match:
                 game.finished = True
