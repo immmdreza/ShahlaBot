@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any, Callable, TypeVar, overload
+from typing import Any, Callable, Optional, TypeVar, overload
 
 
 @overload
@@ -57,10 +57,11 @@ class RawPlayerInfo:
     alive_emoji: str
     alive_text: str
     role: str
+    won: Optional[str] = None
 
 
-def parse_werewolf_list(text: str):
-    match = re.match(get_players_list_pattern("بازیکن های زنده"), text + "\n")
+def parse_werewolf_list(text: str, end_game: bool):
+    match = re.search(get_players_list_pattern("بازیکن های زنده"), text + "\n")
     if match:
         players_txt = match.groupdict()["players"]
 
@@ -71,7 +72,11 @@ def parse_werewolf_list(text: str):
         return (
             match_to_info(m)
             for m in re.finditer(
-                r"(?P<name>.*): (?P<alive_emoji>.{1}) (?P<alive_text>.*) - (?P<role>.*)",
+                (
+                    r"(?P<name>.*): (?P<alive_emoji>.{1}) (?P<alive_text>.*) - (?P<role>.*)(?P<won> برنده|بازنده)"
+                    if end_game
+                    else r"(?P<name>.*): (?P<alive_emoji>.{1}) (?P<alive_text>.*) - (?P<role>.*)"
+                ),
                 players_txt,
             )
         )
@@ -82,16 +87,18 @@ if __name__ == "__main__":
     if (
         (
             roles := parse_werewolf_list(
-                """بازیکن های زنده: 3/6
-𝒅𝒊𝒂𝒏𝒂༗: 💀 مرده - پیشگو 👳
-'𝘔𝘦𝘭𝘪𝘬𝘢: 💀 مرده - گرگ نما 👱🌚
-ᯓ⁪⁬⁮⁮⁪⁪⁬⁮⁮⁪⁪⁬⁮⁮⁪⁪⁬⁮⁮⁪⁬⁪⁬⁮⁮⁪⁪⁬ᴍᴏᴢʜɪᴡ🦋 🥉: 💀 مرده - پیشگو 👳
-ᴍᴀᴍᴀᴅ🎈: 🙂 زنده
-𝓜𝓪𝓱𝓪𝓴🌙: 🙂 زنده
-<🐶N4H!D0khT🐶>: 🙂 زنده""",
+                """روز 1
+
+بازیکن های زنده: 4/5
+𝙸𝚍𝚊_𝚆 𝆥: 💀 مرده - روستایی 👱
+•𝑓𝑎𝑡𝑒𝑚𝑒ℎ♡♫: 🙂 زنده
+🪷ࡋߺ❟ࡅߺ߳❟ࡑ‌‌ 🐈‍⬛️🫧: 🙂 زنده
+Ƙнλdιϳ: 🙂 زنده
+A̤̮ʀαՏH: 🙂 زنده""",
+                False,
             )
         )
         is not None
     ):
-        for role in list(roles)[-1:]:
+        for role in list(roles):
             print(role)
