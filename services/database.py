@@ -5,6 +5,7 @@ import pymongo.mongo_client
 
 from models import ModelBase
 from models._filter_builder import _FilterBuilder
+from models.action_reward_log import ActionRewardLog
 from models.configuration import Configuration
 from models.extra_info import ExtraInfo
 from models.game_actions import GameAction
@@ -90,6 +91,7 @@ class Database:
         self._game_infos: Optional[Collection[GameInfo]] = None
         self._role_infos: Optional[Collection[RoleInfo]] = None
         self._game_actions: Optional[Collection[GameAction]] = None
+        self._action_reward_log: Optional[Collection[ActionRewardLog]] = None
 
     def get_collection(self, entity_type: type[T]) -> Collection[T]:
         return Collection(entity_type, self.db.get_collection(entity_type.__name__))
@@ -135,6 +137,12 @@ class Database:
         if self._game_actions is None:
             self._game_actions = self.get_collection(GameAction)
         return self._game_actions
+
+    @property
+    def action_reward_log(self) -> Collection[ActionRewardLog]:
+        if self._action_reward_log is None:
+            self._action_reward_log = self.get_collection(ActionRewardLog)
+        return self._action_reward_log
 
     def set_up(self, config: Configuration):
         col = self.configurations

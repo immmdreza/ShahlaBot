@@ -5,6 +5,7 @@ from pyrogram.filters import group, text, user
 from pyrogram.types import Message
 
 from helpers import parse_werewolf_list
+from models.action_reward_log import ActionRewardLog
 from models.game_actions import GameAction
 from models.game_info import GameInfo
 from models.role_info import RoleInfo
@@ -52,9 +53,6 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                 game.alive_players = int(alive_players)
                 game.finished = False
                 games.update_model(game)
-
-            # Clear old roles
-            database.role_infos.clear()
 
             infos = (
                 RoleInfo(in_game_name=x.user.first_name, user_id=x.user.id)
@@ -112,16 +110,24 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                                     {"_id": game_action.id}
                                 )
 
+                            database.action_reward_log.insert_one(
+                                ActionRewardLog(
+                                    user_id=user_id, reward_worth=game_action.worth
+                                )
+                            )
                             await message.reply_text(
                                 f"کاربر {player.name} [{user_id}]، {game_action.worth} امتیاز به خاطر حرکتش حین بازی دریافت میکنه."
                             )
                             await message.reply_text(
-                                f"/cup {user_id} +{game_action.worth}"
+                                f"/cup {user_id} +{game_action.worth}", quote=False
                             )
 
             if end_match:
                 game.finished = True
                 games.update_model(game)
+                database.game_actions.clear()
+                # Clear old roles
+                database.role_infos.clear()
 
                 await message.reply_text("/confirm", quote=True)
                 await message.reply_text("/clear", quote=True)
