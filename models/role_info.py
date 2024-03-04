@@ -181,8 +181,7 @@ class WerewolfRole(Enum):
 
     @staticmethod
     def from_role_text(text: str) -> "WerewolfRole":
-        match text:
-
+        match text.strip():
             case "روستایی 👱":
                 return WerewolfRole.Villager
             case "گرگینه 🐺":
@@ -203,7 +202,7 @@ class WerewolfRole(Enum):
                 return WerewolfRole.Traitor
             case "فرشته نگهبان 👼":
                 return WerewolfRole.GuardingAngle
-            case "کاراگاه 🕵":
+            case "کاراگاه 🕵️":
                 return WerewolfRole.Detective
             case "پیشگوی رزرو 🙇":
                 return WerewolfRole.AppS
@@ -255,20 +254,20 @@ class WerewolfRole(Enum):
                 return WerewolfRole.WiseElder
             case "دزد😈":
                 return WerewolfRole.Thief
-            case " دردسرساز 🤯":
+            case "دردسرساز 🤯":
                 return WerewolfRole.Troublemaker
-            case " شیمیدان 👨‍🔬":
+            case "شیمیدان 👨‍🔬":
                 return WerewolfRole.Chemist
-            case " گرگ برفی 🐺☃️":
+            case "گرگ برفی 🐺☃️":
                 return WerewolfRole.SnowWolf
-            case " گورکن ☠️":
+            case "گورکن ☠️":
                 return WerewolfRole.GraveDigger
-            case " آتش زن 🔥":
+            case "آتش زن 🔥":
                 return WerewolfRole.Arsonist
-            case " رمال 🦅":
+            case "رمال 🦅":
                 return WerewolfRole.Augur
             case r:
-                raise Exception(f"No such werewolf role: {r}")
+                raise Exception(f"No such werewolf role: '{r}'.")
 
 
 villager_enemies = [
