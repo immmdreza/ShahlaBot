@@ -3,10 +3,11 @@ import asyncio
 from pyrogram.filters import group, reply, text
 from pyrogram.types import Message
 
-from shahla import Shahla
+from shahla import Shahla, async_injector
 
 
-@Shahla.on_message(text & group & reply, group=-1)  # type: ignore
+@Shahla.on_message(text & group & reply, group=-2)  # type: ignore
+@async_injector
 async def replies_from_task_system(_: Shahla, message: Message):
     if (text := message.text) is None:
         return

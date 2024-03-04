@@ -100,27 +100,27 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                     )
                     if result.modified_count == 1:
                         user_id = database.role_infos.find_one({"role": player.role}).user_id  # type: ignore
-                        if (
-                            game_action := database.game_actions.find_one(
+                        game_actions = list(
+                            database.game_actions.find({"done_by_role": player.role})
+                        )
+
+                        if any(x.one_time for x in game_actions):
+                            database.game_actions.delete_many(
                                 {"done_by_role": player.role}
                             )
-                        ) is not None:
-                            if game_action.one_time:
-                                database.game_actions.delete_one(
-                                    {"_id": game_action.id}
-                                )
 
-                            database.action_reward_log.insert_one(
-                                ActionRewardLog(
-                                    user_id=user_id, reward_worth=game_action.worth
-                                )
-                            )
-                            await message.reply_text(
-                                f"کاربر {player.name} [{user_id}]، {game_action.worth} امتیاز به خاطر حرکتش حین بازی دریافت میکنه."
-                            )
-                            await message.reply_text(
-                                f"/cup {user_id} +{game_action.worth}", quote=False
-                            )
+                        actions_count = len(game_actions)
+                        total_worth = sum(x.worth for x in game_actions)
+                        database.action_reward_log.insert_one(
+                            ActionRewardLog(user_id=user_id, reward_worth=total_worth)
+                        )
+
+                        await message.reply_text(
+                            f"کاربر {player.name} [{user_id}]، {total_worth} امتیاز به خاطر حرکت(هاش - جمعا {actions_count} حرکت) حین بازی دریافت میکنه."
+                        )
+                        await message.reply_text(
+                            f"/cup {user_id} +{total_worth}", quote=False
+                        )
 
             if end_match:
                 game.finished = True
