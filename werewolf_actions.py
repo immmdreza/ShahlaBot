@@ -8,7 +8,7 @@ from models.role_info import WerewolfRole, villager_enemies
 
 @dataclass
 class WerewolfActionPartialData:
-    done_to_role: WerewolfRole
+    done_to_roles: list[WerewolfRole]
 
 
 @dataclass
@@ -17,8 +17,8 @@ class WerewolfActionData:
     partial: WerewolfActionPartialData
 
     @property
-    def done_to_role(self):
-        return self.partial.done_to_role
+    def done_to_roles(self):
+        return self.partial.done_to_roles
 
 
 class WerewolfAction(ABC):
@@ -67,7 +67,7 @@ class WerewolfAction(ABC):
             return WerewolfActionData(done_by_role=self.done_by_role, partial=partial)
 
     @staticmethod
-    def done_to_role_data_extraction(patterns: list[str]):
+    def done_to_role_data_extraction(patterns: list[re.Pattern[str]]):
         def __extractor(message_text: str):
             if (
                 matched := next(
@@ -92,7 +92,7 @@ class WerewolfAction(ABC):
         return __extractor
 
     @staticmethod
-    def match_only_data_extraction(patterns: dict[str, str]):
+    def match_only_data_extraction(patterns: dict[str, re.Pattern[str]]):
         def __extractor(message_text: str):
             return (
                 matched := next(
@@ -124,23 +124,32 @@ class OnetimeWerewolfAction(WerewolfAction, ABC):
         super().__init__(name, done_by_role, True, default_worth)
 
 
+GUNNER_SHOT_PAT = re.compile(
+    r"با شنیدن صدای تیر، روستاییا دور تفنگدار جمع میشن. جناب (?P<gunner>.*) زده (.*) رو کشته (.*) چیزی نبود جز یک (?P<role>.*)"
+)
+
+
 class GunnerShot(OnetimeWerewolfAction):
     def __init__(self) -> None:
         super().__init__("تیر موفق به نقش های ضد روستایی", WerewolfRole.Gunner, 0)
 
     def _extract_data(self, message_text: str) -> Optional[WerewolfActionPartialData]:
-        extractor = WerewolfAction.done_to_role_data_extraction(
-            [
-                r"با شنیدن صدای تیر، روستاییا دور تفنگدار جمع میشن. جناب (?P<gunner>.*) زده (.*) رو کشته (.*) چیزی نبود جز یک (?P<role>.*)"
-            ]
-        )
+        extractor = WerewolfAction.done_to_role_data_extraction([GUNNER_SHOT_PAT])
         role = extractor(message_text)
         if role is not None:
-            return WerewolfActionPartialData(done_to_role=role)
+            return WerewolfActionPartialData(done_to_roles=[role])
 
     def _worth(self, data: WerewolfActionData) -> Optional[int]:
-        if data.done_to_role in villager_enemies:
+        if data.done_to_roles[0] in villager_enemies:
             return 10
+
+
+HUNTER_SHOT_PAT_1 = re.compile(
+    r"کلانتر یعنی (.*) لحظاتی قبل از مرگش اسلحه رو درآورد و به (.*) شلیک کرد به امید اینکه یه گرگ رو هم با خودش کشته باشه. (.*) چیزی نبود جز یک (?P<role>.*)",
+)
+HUNTER_SHOT_PAT_2 = re.compile(
+    r"کلانتر یعنی (.*) آخرین لحظه تفنگشو در آورد و (.*) رو کشت. (.*) چیزی نبود جز یک (?P<role>.*)",
+)
 
 
 class HunterFinalShot(OnetimeWerewolfAction):
@@ -148,19 +157,21 @@ class HunterFinalShot(OnetimeWerewolfAction):
         super().__init__("اخرین تیر موفق به نقش ضد روستایی", WerewolfRole.Hunter, 0)
 
     def _worth(self, data: WerewolfActionData) -> Optional[int]:
-        if data.done_to_role in villager_enemies:
+        if data.done_to_roles[0] in villager_enemies:
             return 10
 
     def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
         extractor = WerewolfAction.done_to_role_data_extraction(
-            [
-                r"کلانتر یعنی (.*) لحظاتی قبل از مرگش اسلحه رو درآورد و به (.*) شلیک کرد به امید اینکه یه گرگ رو هم با خودش کشته باشه. (.*) چیزی نبود جز یک (?P<role>.*)",
-                r"کلانتر یعنی (.*) آخرین لحظه تفنگشو در آورد و (.*) رو کشت. (.*) چیزی نبود جز یک (?P<role>.*)",
-            ]
+            [HUNTER_SHOT_PAT_1, HUNTER_SHOT_PAT_2]
         )
         role = extractor(message_text)
         if role is not None:
-            return WerewolfActionPartialData(done_to_role=role)
+            return WerewolfActionPartialData(done_to_roles=[role])
+
+
+CHEMIST_KILL_PAT = re.compile(
+    r"(.*) به دیدن (.*) رفت تا باهم نوشیدنی بخورند اما (.*) انتخاب خوبی نداشت و سم رو انتخاب کرد، (.*) چیزی نبود جز یک (?P<role>.*)",
+)
 
 
 class ChemistSuccessfulKill(OnetimeWerewolfAction):
@@ -168,18 +179,19 @@ class ChemistSuccessfulKill(OnetimeWerewolfAction):
         super().__init__("سم دادن موفق شیمی به نقش منفی", WerewolfRole.Chemist, 0)
 
     def _worth(self, data: WerewolfActionData) -> Optional[int]:
-        if data.done_to_role in villager_enemies:
+        if data.done_to_roles[0] in villager_enemies:
             return 10
 
     def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
-        extractor = WerewolfAction.done_to_role_data_extraction(
-            [
-                r"(.*) به دیدن (.*) رفت تا باهم نوشیدنی بخورند اما (.*) انتخاب خوبی نداشت و سم رو انتخاب کرد، (.*) چیزی نبود جز یک (?P<role>.*)",
-            ]
-        )
+        extractor = WerewolfAction.done_to_role_data_extraction([CHEMIST_KILL_PAT])
         role = extractor(message_text)
         if role is not None:
-            return WerewolfActionPartialData(done_to_role=role)
+            return WerewolfActionPartialData(done_to_roles=[role])
+
+
+CULTIST_HUNT_PAT = re.compile(
+    r"اینطور که معلومه شکارچی دیشب زده یکی از اعضای فرقه (.*) رو کشته"
+)
 
 
 class CultHunterCultHunt(OnetimeWerewolfAction):
@@ -188,10 +200,16 @@ class CultHunterCultHunt(OnetimeWerewolfAction):
 
     def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
         extractor = WerewolfAction.match_only_data_extraction(
-            {"cult": r"اینطور که معلومه شکارچی دیشب زده یکی از اعضای فرقه (.*) رو کشته"}
+            {"cult": CULTIST_HUNT_PAT}
         )
         if extractor(message_text) is not None:
-            return WerewolfActionPartialData(done_to_role=WerewolfRole.Cult)
+            return WerewolfActionPartialData(done_to_roles=[WerewolfRole.Cult])
+
+
+HARLOT_VISIT_PAT_1 = re.compile(
+    r"دیشب فاحشه (.*) پیش یکی از روستایی ها رفت که یه حالی بهش بده ولی گرگینه بود و کشتش😰"
+)
+HARLOT_VISIT_PAT_2 = re.compile(r"فاحشه (.*) رفت خونه قاتل زنجیره ای 🔫😭")
 
 
 class HarlotVisitingWolfOrSk(OnetimeWerewolfAction):
@@ -201,18 +219,27 @@ class HarlotVisitingWolfOrSk(OnetimeWerewolfAction):
     def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
         extractor = WerewolfAction.match_only_data_extraction(
             {
-                "wolf": r"دیشب فاحشه (.*) پیش یکی از روستایی ها رفت که یه حالی بهش بده ولی گرگینه بود و کشتش😰",
-                "sk": r"فاحشه (.*) رفت خونه قاتل زنجیره ای 🔫😭",
+                "wolf": HARLOT_VISIT_PAT_1,
+                "sk": HARLOT_VISIT_PAT_2,
             }
         )
         if (key := extractor(message_text)) is not None:
             return WerewolfActionPartialData(
-                done_to_role=(
-                    WerewolfRole.Werewolf
-                    if key == "wolf"
-                    else WerewolfRole.SerialKiller
+                done_to_roles=(
+                    [
+                        (
+                            WerewolfRole.Werewolf
+                            if key == "wolf"
+                            else WerewolfRole.SerialKiller
+                        )
+                    ]
                 )
             )
+
+
+SERIAL_KILLER_PAT = re.compile(
+    r"صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی (.*) رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده (.*) چیزی نبود جز یک (?P<role>.*)",
+)
 
 
 class SerialKillerBigKill(OnetimeWerewolfAction):
@@ -220,17 +247,13 @@ class SerialKillerBigKill(OnetimeWerewolfAction):
         super().__init__("کشته شدن نقش تپل توسط قاتل", WerewolfRole.SerialKiller, 0)
 
     def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
-        extractor = WerewolfAction.done_to_role_data_extraction(
-            [
-                r"صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی (.*) رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده (.*) چیزی نبود جز یک (?P<role>.*)",
-            ]
-        )
+        extractor = WerewolfAction.done_to_role_data_extraction([SERIAL_KILLER_PAT])
         role = extractor(message_text)
         if role is not None:
-            return WerewolfActionPartialData(done_to_role=role)
+            return WerewolfActionPartialData(done_to_roles=[role])
 
     def _worth(self, data: WerewolfActionData) -> int | None:
-        if data.done_to_role in [
+        if data.done_to_roles[0] in [
             WerewolfRole.Arsonist,
             WerewolfRole.Detective,
             WerewolfRole.GuardingAngle,
@@ -245,18 +268,42 @@ class SerialKillerBigKill(OnetimeWerewolfAction):
             return 10
 
 
+ARSONIST_BURN_PAT = re.compile(
+    r"روستایی ها با حس کردن بوی آتش بیدار شدند... مثل اینکه آتش سوزی رخ داده! شما تلاش میکنید آتش را خاموش کنید، اما بسیار دیر برای نجات افرادی که خانه هایشان بطور عجیبی به نفت آغشته شده بود اقدام کردید. امروز شما برای این افراد عزاداری میکنید:\n"
+)
+ARSONIST_BURNED_ROLE_PAT = re.compile(r"(?:.*) چیزی نبود جز یک (?P<role>.*)")
+
+
 class ArsonistBigBurn(OnetimeWerewolfAction):
     def __init__(self) -> None:
         super().__init__("سوزاندن نقش های تپل", WerewolfRole.Arsonist, 0)
 
     def _extract_data(self, message_text: str) -> WerewolfActionPartialData | None:
-        m = patten = re.compile(
-            r"روستایی ها با حس کردن بوی آتش بیدار شدند... مثل اینکه آتش سوزی رخ داده! شما تلاش میکنید آتش را خاموش کنید، اما بسیار دیر برای نجات افرادی که خانه هایشان بطور عجیبی به نفت آغشته شده بود اقدام کردید. امروز شما برای این افراد عزاداری میکنید:\n"
-        )
-        if m.match(message_text):
-            ...
+        if ARSONIST_BURN_PAT.match(message_text):
+            roles = [
+                WerewolfRole.from_role_text(role_text)
+                for role_text in ARSONIST_BURNED_ROLE_PAT.findall(message_text)
+            ]
+            return WerewolfActionPartialData(done_to_roles=roles)
 
-        # ((.*) چیزی نبود جز یک (.*)\n?)+
+    def _worth(self, data: WerewolfActionData) -> int | None:
+        big_roles = [
+            WerewolfRole.SerialKiller,
+            WerewolfRole.Detective,
+            WerewolfRole.GuardingAngle,
+            WerewolfRole.Seer,
+            WerewolfRole.AlphaWolf,
+            WerewolfRole.Harlot,
+            WerewolfRole.Lycan,
+            WerewolfRole.Werewolf,
+            WerewolfRole.SnowWolf,
+            WerewolfRole.WolfCub,
+        ]
+        worth = 0
+        for role in data.done_to_roles:
+            if role in big_roles:
+                worth += 10
+        return worth
 
 
 available_actions: list[WerewolfAction] = [
@@ -266,6 +313,7 @@ available_actions: list[WerewolfAction] = [
     CultHunterCultHunt(),
     HarlotVisitingWolfOrSk(),
     SerialKillerBigKill(),
+    ArsonistBigBurn(),
 ]
 
 
@@ -278,35 +326,21 @@ def matched_actions(message_text: str):
 
 
 if __name__ == "__main__":
-    #     message_texts = [
-    #         "با شنیدن صدای تیر، روستاییا دور تفنگدار جمع میشن. جناب Amir² زده •|Green°🌸 رو کشته •|Green°🌸 چیزی نبود جز یک  آتش زن 🔥",
-    #         "کلانتر یعنی яσʑԋαи↬|♬| آخرین لحظه تفنگشو در آورد و Saeed.N رو کشت. Saeed.N چیزی نبود جز یک توله گرگ 🐶",
-    #         "شیمیدان 👨‍🔬 به دیدن 🈂️иιкαи رفت تا باهم نوشیدنی بخورند اما 🈂️иιкαи انتخاب خوبی نداشت و سم رو انتخاب کرد، 🈂️иιкαи چیزی نبود جز یک گرگ آلفا ⚡️",
-    #         "اینطور که معلومه شکارچی دیشب زده یکی از اعضای فرقه s🌸12 رو کشته",
-    #         "دیشب فاحشه Baran🔥 پیش یکی از روستایی ها رفت که یه حالی بهش بده ولی گرگینه بود و کشتش😰",
-    #         """فاحشه ⁭⁫⁭⁭⁫⁭⁫⁭⁭⁫⁭⁭⁫⁭⁫paradox رفت خونه قاتل زنجیره ای 🔫😭
+    message_texts = [
+        "با شنیدن صدای تیر، روستاییا دور تفنگدار جمع میشن. جناب Amir² زده •|Green°🌸 رو کشته •|Green°🌸 چیزی نبود جز یک  آتش زن 🔥",
+        "کلانتر یعنی яσʑԋαи↬|♬| آخرین لحظه تفنگشو در آورد و Saeed.N رو کشت. Saeed.N چیزی نبود جز یک توله گرگ 🐶",
+        "شیمیدان 👨‍🔬 به دیدن 🈂️иιкαи رفت تا باهم نوشیدنی بخورند اما 🈂️иιкαи انتخاب خوبی نداشت و سم رو انتخاب کرد، 🈂️иιкαи چیزی نبود جز یک گرگ آلفا ⚡️",
+        "اینطور که معلومه شکارچی دیشب زده یکی از اعضای فرقه s🌸12 رو کشته",
+        "دیشب فاحشه Baran🔥 پیش یکی از روستایی ها رفت که یه حالی بهش بده ولی گرگینه بود و کشتش😰",
+        """فاحشه ⁭⁫⁭⁭⁫⁭⁫⁭⁭⁫⁭⁭⁫⁭⁫paradox رفت خونه قاتل زنجیره ای 🔫😭
 
-    # خب روز شد. شما 90 ثانیه وقت دارین بحث کنین
+    خب روز شد. شما 90 ثانیه وقت دارین بحث کنین
 
-    # روز 1""",
-    #         """صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی ⚡️Aʀʏᴀ✞Mᴀsᴛᴇʀsʰᵉʳᵒ⚡️ رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده ⚡️Aʀʏᴀ✞Mᴀsᴛᴇʀsʰᵉʳᵒ⚡️ چیزی نبود جز یک فراماسون 👷
+    روز 1""",
+        """صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی ⚡️Aʀʏᴀ✞Mᴀsᴛᴇʀsʰᵉʳᵒ⚡️ رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده ⚡️Aʀʏᴀ✞Mᴀsᴛᴇʀsʰᵉʳᵒ⚡️ چیزی نبود جز یک فراماسون 👷
 
-    # خب روز شد. شما 90 ثانیه وقت دارین بحث کنین""",
-    #         "صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی 𝑺𝒂𝒉𝒂𝒓 ᴹᵒᵘˢᵃᵛⁱ رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده 𝑺𝒂𝒉𝒂𝒓 ᴹᵒᵘˢᵃᵛⁱ چیزی نبود جز یک کاراگاه 🕵️",
-    #     ]
-
-    #     for message_text in message_texts:
-    #         for action, data in matched_actions(message_text):
-    #             print(action, data)
-    #             print(f"{action.worth(data)=}")
-    #         print("------------------")
-
-    patten = re.compile(
-        r"""روستایی ها با حس کردن بوی آتش بیدار شدند... مثل اینکه آتش سوزی رخ داده! شما تلاش میکنید آتش را خاموش کنید، اما بسیار دیر برای نجات افرادی که خانه هایشان بطور عجیبی به نفت آغشته شده بود اقدام کردید. امروز شما برای این افراد عزاداری میکنید:
-((.*) چیزی نبود جز یک (.*)\n?)+"""
-    )
-
-    matchs = patten.findall(
+    خب روز شد. شما 90 ثانیه وقت دارین بحث کنین""",
+        "صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی 𝑺𝒂𝒉𝒂𝒓 ᴹᵒᵘˢᵃᵛⁱ رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده 𝑺𝒂𝒉𝒂𝒓 ᴹᵒᵘˢᵃᵛⁱ چیزی نبود جز یک کاراگاه 🕵️",
         """روستایی ها با حس کردن بوی آتش بیدار شدند... مثل اینکه آتش سوزی رخ داده! شما تلاش میکنید آتش را خاموش کنید، اما بسیار دیر برای نجات افرادی که خانه هایشان بطور عجیبی به نفت آغشته شده بود اقدام کردید. امروز شما برای این افراد عزاداری میکنید:
 s🌸7 چیزی نبود جز یک گرگینه 🐺
 s🌸16 چیزی نبود جز یک روستایی 👱
@@ -317,8 +351,11 @@ s🌸3 چیزی نبود جز یک پیشگو 👳
 •|Yellow°🌸 چیزی نبود جز یک گرگینه 🐺
 мα² چیزی نبود جز یک روستایی 👱
 мα⁷ چیزی نبود جز یک ناظر 👁
-•|Blue°🌸 چیزی نبود جز یک روستایی 👱"""
-    )
+•|Blue°🌸 چیزی نبود جز یک روستایی 👱""",
+    ]
 
-    for m in matchs:
-        print(m)
+    for message_text in message_texts:
+        for action, data in matched_actions(message_text):
+            print(action, data)
+            print(f"{action.worth(data)=}")
+        print("------------------")
