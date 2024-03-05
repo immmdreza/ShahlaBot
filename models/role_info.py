@@ -181,7 +181,8 @@ class WerewolfRole(Enum):
 
     @staticmethod
     def from_role_text(text: str) -> "WerewolfRole":
-        match text.strip():
+        t = text.strip()
+        match t:
             case "روستایی 👱":
                 return WerewolfRole.Villager
             case "گرگینه 🐺":
@@ -202,7 +203,7 @@ class WerewolfRole(Enum):
                 return WerewolfRole.Traitor
             case "فرشته نگهبان 👼":
                 return WerewolfRole.GuardingAngle
-            case "کاراگاه 🕵️":
+            case "کاراگاه 🕵" | "کاراگاه 🕵️":
                 return WerewolfRole.Detective
             case "پیشگوی رزرو 🙇":
                 return WerewolfRole.AppS

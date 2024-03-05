@@ -1,7 +1,7 @@
 import re
 
 import pyrogram
-from pyrogram.filters import group, text, user
+from pyrogram.filters import command, group, reply, text, user
 from pyrogram.types import Message
 
 from helpers import parse_werewolf_list
@@ -21,9 +21,7 @@ END_GAME_PATTERN = re.compile(
 )
 
 
-@Shahla.on_message(user(175844556) & text & group, group=-1)  # type: ignore
-@async_injector
-async def from_werewolf(_: Shahla, message: Message, database: Database):
+async def handle_from_werewolf(message: Message, database: Database):
 
     if not message.text:
         return
@@ -94,33 +92,37 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                 )
 
                 for player in players_to_check:
+                    role = player.role.strip()
                     result = database.role_infos.update_one(
                         {"in_game_name": player.name},
-                        {"$set": {"role": player.role, "alive": False}},
+                        {"$set": {"role": role, "alive": False}},
                     )
                     if result.modified_count == 1:
-                        user_id = database.role_infos.find_one({"role": player.role}).user_id  # type: ignore
+                        user_id = database.role_infos.find_one({"role": role}).user_id  # type: ignore
                         game_actions = list(
-                            database.game_actions.find({"done_by_role": player.role})
+                            database.game_actions.find({"done_by_role": role})
                         )
 
-                        if any(x.one_time for x in game_actions):
-                            database.game_actions.delete_many(
-                                {"done_by_role": player.role}
+                        if len(game_actions) > 0:
+                            if any(x.one_time for x in game_actions):
+                                database.game_actions.delete_many(
+                                    {"done_by_role": role}
+                                )
+
+                            actions_count = len(game_actions)
+                            total_worth = sum(x.worth for x in game_actions)
+                            database.action_reward_log.insert_one(
+                                ActionRewardLog(
+                                    user_id=user_id, reward_worth=total_worth
+                                )
                             )
 
-                        actions_count = len(game_actions)
-                        total_worth = sum(x.worth for x in game_actions)
-                        database.action_reward_log.insert_one(
-                            ActionRewardLog(user_id=user_id, reward_worth=total_worth)
-                        )
-
-                        await message.reply_text(
-                            f"کاربر {player.name} [{user_id}]، {total_worth} امتیاز به خاطر حرکت(هاش - جمعا {actions_count} حرکت) حین بازی دریافت میکنه."
-                        )
-                        await message.reply_text(
-                            f"/cup {user_id} +{total_worth}", quote=False
-                        )
+                            await message.reply_text(
+                                f"کاربر {player.name} [{user_id}]، {total_worth} امتیاز به خاطر حرکت(هاش - جمعا {actions_count} حرکت) حین بازی دریافت میکنه."
+                            )
+                            await message.reply_text(
+                                f"/cup {user_id} +{total_worth}", quote=False
+                            )
 
             if end_match:
                 game.finished = True
@@ -151,8 +153,20 @@ async def from_werewolf(_: Shahla, message: Message, database: Database):
                 )
                 database.game_actions.insert_one(
                     GameAction(
-                        done_by_role=data.done_by_role.to_role_text(),
+                        done_by_role=data.done_by_role.to_role_text().strip(),
                         worth=worth,
                         one_time=action.is_one_time,
                     )
                 )
+
+
+@Shahla.on_message(user(175844556) & text & group, group=-1)  # type: ignore
+@async_injector
+async def from_werewolf(_: Shahla, message: Message, database: Database):
+    await handle_from_werewolf(message, database)
+
+
+@Shahla.on_message(user(106296897) & text & group & command("t") & reply)  # type: ignore
+@async_injector
+async def from_werewolf_test(_: Shahla, message: Message, database: Database):
+    await handle_from_werewolf(message.reply_to_message, database)
