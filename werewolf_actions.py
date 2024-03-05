@@ -240,6 +240,9 @@ class HarlotVisitingWolfOrSk(OnetimeWerewolfAction):
 SERIAL_KILLER_PAT = re.compile(
     r"صبح روز بعد اعضای روستا بدن تیکه تیکه شده ی (?:.*) رو دیدن که روی زمین افتاده. قاتل زنجیره ای بازم به یه نفر حمله کرده (.*) چیزی نبود جز یک (?P<role>.*)",
 )
+SERIAL_KILLER_SEER_PAT = re.compile(
+    r"صبح روز بعد روستایی ها به خونه (?:.*) میرن که از پیشگویی های شب قبلش مطلع شن اما به پای چپ پیشگو برمیخورن! قاتل زنجیره ای جنازه پیشگو رو به کلکسیونش اضافه کرده!"
+)
 
 
 class SerialKillerBigKill(OnetimeWerewolfAction):
@@ -251,6 +254,9 @@ class SerialKillerBigKill(OnetimeWerewolfAction):
         role = extractor(message_text)
         if role is not None:
             return WerewolfActionPartialData(done_to_roles=[role])
+        elif SERIAL_KILLER_SEER_PAT.search(message_text) is not None:
+            # Check for seer kill message
+            return WerewolfActionPartialData(done_to_roles=[WerewolfRole.Seer])
 
     def _worth(self, data: WerewolfActionData) -> int | None:
         if data.done_to_roles[0] in [
